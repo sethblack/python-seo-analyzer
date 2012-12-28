@@ -1,9 +1,9 @@
+#!/usr/bin/env python
 from bs4 import BeautifulSoup
-import urllib2
 from xml.dom import minidom
+from urllib2 import urlopen
 
 class Page:
-
     def __init__(self):
 	self.title = ''
 	self.url = ''
@@ -57,14 +57,18 @@ def getText(nodelist):
             rc.append(node.data)
     return ''.join(rc)
 
-page = urllib2.urlopen('http://monikerguitars.com/sitemap.xml')
-xml_raw = page.read()
-xmldoc = minidom.parseString(xml_raw)
-urls = xmldoc.getElementsByTagName('loc') 
+def main():
+    page = urlopen('http://monikerguitars.com/sitemap.xml')
+    xml_raw = page.read()
+    xmldoc = minidom.parseString(xml_raw)
+    urls = xmldoc.getElementsByTagName('loc') 
 
-for url in urls:
-    pg = Page()
-    pg.analyze(getText(url.childNodes))
-    pg.talk('warnings')
+    for url in urls:
+	pg = Page()
+	pg.analyze(getText(url.childNodes))
+	pg.talk('warnings')
+
+if __name__ == "__main__":
+    main()
 
 
