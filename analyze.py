@@ -2,11 +2,15 @@
 from bs4 import BeautifulSoup
 from xml.dom import minidom
 from urllib2 import urlopen
+import urllib2
 from string import maketrans, punctuation
 from operator import itemgetter
 from re import sub, match
 import re
 import sys
+import nltk
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk import stem
 
 # nice, a global variable >:{
 wordcount = {}
@@ -14,6 +18,9 @@ wordcount = {}
 # and, now some more
 pages_crawled = []
 pages_to_crawl = []
+stem_to_word = {}
+stemmer = stem.porter.PorterStemmer()
+#stemmer = stem.lancaster.LancasterStemmer()
 
 class Page(object):
     """
@@ -70,8 +77,18 @@ class Page(object):
 
         pages_crawled.append(self.url)
 
-        page = urlopen(self.url)
-        raw_html = page.read()
+        try:
+            page = urlopen(self.url)
+        except urllib2.HTTPError:
+            self.warn('Returned 404')
+            return
+
+        encoding = page.headers['content-type'].split('charset=')[-1]
+
+        if encoding not in('text/html', 'text/plain'):
+            raw_html = unicode(page.read(), encoding)
+        else:
+            raw_html = page.read()
 
         # remove comments, they screw with BeautifulSoup
         clean_html = sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
@@ -81,8 +98,7 @@ class Page(object):
         texts = soup.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
 
-        for element in visible_text:
-            self.incr_global_word_count(element.encode('utf-8'))
+        self.process_text(visible_text)
 
         self.populate(soup)
 
@@ -91,6 +107,37 @@ class Page(object):
         self.analyze_keywords()
         self.analyze_a_tags(soup)
         self.analyze_img_tags(soup)
+
+    def process_text(self, vt):
+        page_text = ''
+
+        for element in vt:
+            page_text += element.encode('utf-8').lower() + ' '
+
+        tokens = nltk.word_tokenize(page_text)
+
+        freq_dist = nltk.FreqDist(tokens)
+
+        for word in freq_dist:
+            # strip out punctuation
+            word = word.translate(self.translation)
+
+            # strip suffixes
+            root = stemmer.stem(word)
+
+            # add one more layer of stripping
+            if not self.is_valid_word(root):
+                continue
+
+            if root in stem_to_word and freq_dist[word] > stem_to_word[root]['count']:
+                stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+            else:
+                stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+
+            if root in wordcount:
+                wordcount[root] += freq_dist[word]
+            else:
+                wordcount[root] = freq_dist[word]
 
     def is_valid_word(self, word):
         """
@@ -105,27 +152,12 @@ class Page(object):
         if word.isdigit():
             return False
 
-        ignore = ('com','net','org','co','edu')
+        ignore = ('a', 'at', 'the', 'of', 'and', 'that', 'for', 'are', 'is',)
 
         if word in ignore:
             return False
 
         return True
-
-    def incr_global_word_count(self, data):
-        """
-        Increment the global word count
-        """
-        clean = data.translate(self.translation).lower()
-
-        for word in clean.split():
-            if not self.is_valid_word(word):
-                continue
-
-            if word in wordcount:
-                wordcount[word] += 1
-            else:
-                wordcount[word] = 1
 
     def analyze_title(self):
         """
@@ -252,7 +284,7 @@ def main(site, sitemap):
     sorted_words = sorted(wordcount.iteritems(), key=itemgetter(1), reverse=True)
 
     for word in sorted_words:
-        print "%s\t%d" % (word[0], word[1])
+        print "%s\t%d" % (stem_to_word[word[0]]['word'], word[1])
 
 if __name__ == "__main__":
     site = ''
