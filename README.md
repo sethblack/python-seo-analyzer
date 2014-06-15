@@ -18,14 +18,14 @@ pip install nltk
 Usage
 -----
 
-Basic usage assumes that there is a sitemap at http://www.sethserver.com/sitemap.xml
+Basic usage assumes that there is a sitemap at http://www.domain.com/sitemap.xml
 
 ```
-./analyze.py http://www.sethserver.com/
+./analyze.py http://www.domain.com/
 ```
 
 Or you can specify the path to the sitmap if it does not exist in the root directory.
 
 ```
-./analyze.py http://www.sethserver.com/ path/to/sitemap.xml
+./analyze.py http://www.domain.com/ path/to/sitemap.xml
 ```
