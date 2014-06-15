@@ -112,10 +112,13 @@ class Page(object):
         self.social_shares()
 
     def social_shares(self):
-        page = urlopen('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls=%s&format=json' % self.url)
+        page = urlopen('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls=%s&format=json'
+            % self.url)
         fb_data = loads(page.read())
 
-        print 'facebook\t%s\t%s\t%s\t%s\t%s' % (self.url, fb_data[0]['share_count'], fb_data[0]['comment_count'], fb_data[0]['like_count'], fb_data[0]['click_count'])
+        print 'facebook\t%s\t%s\t%s\t%s\t%s' % (self.url, fb_data[0]['share_count'],
+            fb_data[0]['comment_count'], fb_data[0]['like_count'],
+            fb_data[0]['click_count'])
 
         page = urlopen('http://urls.api.twitter.com/1/urls/count.json?url=%s&callback=twttr.receiveCount' % self.url)
         twitter_data = loads(page.read()[19:-2])
@@ -125,7 +128,8 @@ class Page(object):
         page = urlopen('http://www.stumbleupon.com/services/1.01/badge.getinfo?url=%s' % self.url)
         su_data = loads(page.read())
 
-        print 'stumbleupon\t%s\t%s' % (self.url, su_data['views'])
+        if 'result' in su_data and 'views' in su_data['result']:
+            print 'stumbleupon\t%s\t%s' % (self.url, su_data['result']['views'])
 
 
     def process_text(self, vt):
