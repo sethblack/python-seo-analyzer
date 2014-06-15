@@ -5,4 +5,17 @@ A small SEO tool that uses a sitemap.xml file to analyze the structure of a site
 
 Requires Python, BeautifulSoup, minidom, nltk and urllib2.
 
-1) Installation
+Installation
+------------
+
+### using pil
+
+```
+
+```
+
+### Ubuntu
+
+```
+sudo apt-get install python-
+```
