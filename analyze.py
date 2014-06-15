@@ -6,11 +6,12 @@ import urllib2
 from string import maketrans, punctuation
 from operator import itemgetter
 from re import sub, match
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk import stem
+from json import loads
 import re
 import sys
 import nltk
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk import stem
 
 # nice, a global variable >:{
 wordcount = {}
@@ -107,6 +108,25 @@ class Page(object):
         self.analyze_keywords()
         self.analyze_a_tags(soup)
         self.analyze_img_tags(soup)
+        self.analyze_h1_tags(soup)
+        self.social_shares()
+
+    def social_shares(self):
+        page = urlopen('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls=%s&format=json' % self.url)
+        fb_data = loads(page.read())
+
+        print 'facebook\t%s\t%s\t%s\t%s\t%s' % (self.url, fb_data[0]['share_count'], fb_data[0]['comment_count'], fb_data[0]['like_count'], fb_data[0]['click_count'])
+
+        page = urlopen('http://urls.api.twitter.com/1/urls/count.json?url=%s&callback=twttr.receiveCount' % self.url)
+        twitter_data = loads(page.read()[19:-2])
+
+        print 'twitter\t%s\t%s' % (self.url, twitter_data['count'])
+
+        page = urlopen('http://www.stumbleupon.com/services/1.01/badge.getinfo?url=%s' % self.url)
+        su_data = loads(page.read())
+
+        print 'stumbleupon\t%s\t%s' % (self.url, su_data['views'])
+
 
     def process_text(self, vt):
         page_text = ''
@@ -230,11 +250,14 @@ class Page(object):
             if 'title' not in image:
                 self.warn('Image missing title')
 
-        pass
+    def analyze_h1_tags(self, bs):
+        """
+        Make sure each page has at least one H1 tag
+        """
+        htags = bs.find_all('h1')
 
-    def analyze_h_tags(self, bs):
-        # TODO make sure each page has at least one h1 tag
-        pass
+        if len(htags) == 0:
+            warn('Each page should have at least one h1 tag')
 
     def analyze_a_tags(self, bs):
         """
