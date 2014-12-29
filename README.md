@@ -15,16 +15,23 @@ pip install BeautifulSoup4
 pip install nltk
 ```
 
+### Python Shell
+
+```
+>> import nltk
+>> nltk.download()
+```
+
 Usage
 -----
 
-Basic usage assumes that there is a sitemap at http://www.domain.com/sitemap.xml
+If you run without a sitemap it will start crawling at the homepage
 
 ```
 ./analyze.py http://www.domain.com/
 ```
 
-Or you can specify the path to the sitmap if it does not exist in the root directory.
+Or you can specify the path to a sitmap to seed the urls to scan list.
 
 ```
 ./analyze.py http://www.domain.com/ path/to/sitemap.xml
