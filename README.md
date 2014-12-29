@@ -1,7 +1,7 @@
-SEOAnalyzer
+Python SEO Analyzer
 ===========
 
-A small SEO tool that uses a sitemap.xml file to analyze the structure of a site, crawl the site using the sitemap as a starting point, count words in the body of the site and warn of any general SEO related issues.
+A small SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.
 
 Requires Python 2.7+, BeautifulSoup4, minidom, nltk and urllib2.
 
