@@ -9,16 +9,20 @@ from operator import itemgetter
 from re import sub, match
 from nltk import stem
 from json import loads
+from collections import Counter
 import re
 import sys
 import nltk
 
 wordcount = {}
+two_ngram = Counter()
+three_ngram = Counter()
 pages_crawled = []
 pages_to_crawl = []
 stem_to_word = {}
 stemmer = stem.porter.PorterStemmer()
-#stemmer = stem.lancaster.LancasterStemmer()
+page_titles = []
+page_descriptions = []
 
 # This list of English stop words is taken from the "Glasgow Information
 # Retrieval Group". The original list can be found at
@@ -83,6 +87,7 @@ class Page(object):
         self.description = u''
         self.keywords = u''
         self.warnings = []
+        self.social = {}
         self.translation = maketrans(punctuation, str(u' ' * len(punctuation)).encode('utf-8'))
         super(Page, self).__init__()
 
@@ -95,6 +100,8 @@ class Page(object):
         elif output == 'warnings':
             if len(self.warnings) > 0:
                 print "{0}\t{1}".format(self.url, self.warnings)
+        elif output == 'normal':
+            print "{0}\t{1}\t{2}".format(self.url, self.social, self.warnings)
         else:
             print "I don't know what {0} is.".format(output)
 
@@ -177,8 +184,13 @@ class Page(object):
         except:
             pass
 
-        print 'facebook\t{0}\t{1}\t{2}\t{3}\t{4}'.format(self.url, fb_share_count,
-            fb_comment_count, fb_like_count, fb_click_count)
+        self.social['facebook'] = {
+            'shares': fb_share_count,
+            'comments': fb_comment_count,
+            'likes': fb_like_count,
+            'clicks': fb_click_count,
+        }
+        #print 'facebook\t{0}\t{1}\t{2}\t{3}\t{4}'.format(self.url, fb_share_count, fb_comment_count, fb_like_count, fb_click_count)
 
         twitter_count = 0
 
@@ -188,7 +200,10 @@ class Page(object):
         except:
             pass
 
-        print 'twitter\t{0}\t{1}'.format(self.url, twitter_count)
+        self.social['twitter'] = {
+            'count': twitter_count,
+        }
+        #print 'twitter\t{0}\t{1}'.format(self.url, twitter_count)
 
         su_views = 0
 
@@ -200,15 +215,19 @@ class Page(object):
         except:
             pass
 
-        print 'stumbleupon\t{0}\t{1}'.format(self.url, su_views)
+        #print 'stumbleupon\t{0}\t{1}'.format(self.url, su_views)
+        self.social['stumbleupon'] = {
+            'stumbles': su_views,
+        }
 
-    def translate_non_alphanumerics(self, to_translate, translate_to=u' '):
-        not_letters_or_digits = u'!"#%\'()*+,-./:;<=>?@[\]^_`{|}~'
-        translate_table = dict((ord(char), translate_to) for char in not_letters_or_digits)
-        return to_translate.translate(translate_table)
+    def raw_tokenize(self, rawtext):
+        return TOKEN_REGEX.findall(rawtext.lower())
 
     def tokenize(self, rawtext):
         return [word for word in TOKEN_REGEX.findall(rawtext.lower()) if word not in ENGLISH_STOP_WORDS]
+
+    def getngrams(self, D, n=2):
+        return zip(*[D[i:] for i in range(n)])
 
     def process_text(self, vt):
         page_text = ''
@@ -217,6 +236,19 @@ class Page(object):
             page_text += element.encode('utf-8').lower() + ' '
 
         tokens = self.tokenize(page_text.decode('utf-8'))
+        raw_tokens = self.raw_tokenize(page_text.decode('utf-8'))
+
+        two_ngrams = self.getngrams(raw_tokens, 2)
+
+        for ng in two_ngrams:
+            vt = ' '.join(ng)
+            two_ngram[vt] += 1
+
+        three_ngrams = self.getngrams(raw_tokens, 3)
+
+        for ng in three_ngrams:
+            vt = ' '.join(ng)
+            three_ngram[vt] += 1
 
         freq_dist = nltk.FreqDist(tokens)
 
@@ -247,10 +279,17 @@ class Page(object):
 
         if length == 0:
             self.warn('Missing title tag')
+            return
         elif length < 10:
             self.warn('Title tag is too short')
         elif length > 70:
             self.warn('Title tag is too long')
+
+        if t in page_titles:
+            self.warn('Duplicate page title')
+            return
+
+        page_titles.append(t)
 
     def analyze_description(self):
         """
@@ -266,10 +305,17 @@ class Page(object):
 
         if length == 0:
             self.warn('Missing description')
+            return
         elif length < 140:
             self.warn('Description is too short')
         elif length > 255:
             self.warn('Description is too long')
+
+        if d in page_descriptions:
+            self.warn('Duplicate description')
+            return
+
+        page_descriptions.append(d)
 
     def analyze_keywords(self):
         """
@@ -289,6 +335,7 @@ class Page(object):
     def visible_tags(self, element):
         if element.parent.name in ['style', 'script', '[document]']:
             return False
+
         return True
 
     def analyze_img_tags(self, bs):
@@ -376,12 +423,20 @@ def main(site, sitemap):
     for page in pages_to_crawl:
         pg = Page(page, site)
         pg.analyze()
-        pg.talk('warnings')
+        pg.talk('normal')
 
     sorted_words = sorted(wordcount.iteritems(), key=itemgetter(1), reverse=True)
+    sorted_two_ngrams = sorted(two_ngram.iteritems())
+    sorted_three_ngrams = sorted(three_ngram.iteritems())
 
-    for word in sorted_words:
-        print "{0}\t{1}".format(stem_to_word[word[0]]['word'].encode('utf-8'), word[1])
+    for w in sorted_words:
+        print "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
+
+    for w, v in sorted_two_ngrams:
+        print "{0}\t{1}".format(w, v)
+
+    for w, v in sorted_three_ngrams:
+        print "{0}\t{1}".format(w, v)
 
 if __name__ == "__main__":
     site = ''
