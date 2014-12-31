@@ -13,6 +13,7 @@ from collections import Counter
 import re
 import sys
 import nltk
+import numpy
 
 wordcount = {}
 two_ngram = Counter()
@@ -71,6 +72,7 @@ ENGLISH_STOP_WORDS = frozenset([
     "yourselves"])
 
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
+sentence_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 class Page(object):
     """
@@ -196,7 +198,8 @@ class Page(object):
 
         try:
             page = urlopen('http://urls.api.twitter.com/1/urls/count.json?url=%s&callback=twttr.receiveCount' % self.url)
-            twitter_count = loads(page.read()[19:-2])['count']
+            page_text = page.read()
+            twitter_count = loads(page_text[page_text.index('{'):-2])['count']
         except:
             pass
 
@@ -228,6 +231,40 @@ class Page(object):
 
     def getngrams(self, D, n=2):
         return zip(*[D[i:] for i in range(n)])
+
+    def is_passive_voice(self, sentence):
+        # determine if a sentence is (probably) in "active" or "passive" voice
+        # return 1 if active, 0 if passive, -1 if indeterminate (rare)
+        
+        if len(nltk.sent_tokenize(sentence)) > 1:
+            warnings.warn("Subroutine voice() only accepts single setences.", UserWarning)
+            return False
+        
+        tags0  = numpy.asarray( nltk.pos_tag(nltk.word_tokenize(sentence)) )
+        tags = tags0[ numpy.where( -numpy.in1d( tags0[:,1], ['RB', 'RBR', 'RBS', 'TO'] ) ) ] # remove adverbs, 'TO'
+
+        if len(tags) < 2: # too short to really know.
+            return False
+        
+        to_be = ['be','am','is','are','was','were','been','has','have','had','do','did','does','can','could','shall','should','will','would','may','might','must']
+
+        WH = [ 'WDT', 'WP', 'WP$', 'WRB', ]
+        VB = ['VBG', 'VBD', 'VBN', 'VBP', 'VBZ', 'VB', ]
+        VB_nogerund = ['VBD', 'VBN', 'VBP', 'VBZ', ]
+        
+        logic0 =  numpy.in1d(tags[:-1,1],['IN'])*numpy.in1d(tags[1:,1],WH) # passive if true
+        if numpy.any(logic0):
+            return True
+
+        logic1 = numpy.in1d(tags[:-2,0],to_be)*numpy.in1d(tags[1:-1,1],VB_nogerund)*numpy.in1d(tags[2:,1],VB) # chain of three verbs, active if true and previous not
+        if numpy.any(logic1):
+            return False
+        
+        if numpy.any(numpy.in1d(tags[:,0],to_be))*numpy.any(numpy.in1d(tags[:,1],['VBN'])): ## 'to be' + past participle verb
+            return True
+
+        # if no clauses have tripped thus far, it's probably active voice:
+        return False
 
     def process_text(self, vt):
         page_text = ''
@@ -264,6 +301,12 @@ class Page(object):
                 wordcount[root] += freq_dist[word]
             else:
                 wordcount[root] = freq_dist[word]
+
+        sentences = sentence_tokenizer.tokenize(page_text.decode('utf-8'))
+
+        for s in sentences:
+            if self.is_passive_voice(s) == True:
+                self.warn('Passive voice is being used in {0}'.format(s.encode('utf-8')))
 
     def analyze_title(self):
         """
@@ -420,23 +463,36 @@ def main(site, sitemap):
 
     pages_to_crawl.append(site)
 
+    crawled = []
+
     for page in pages_to_crawl:
+        if page.strip().lower() in crawled:
+            continue
+
+        if '#' in page:
+            if page[:page.index('#')].strip().lower() in crawled:
+                continue
+
+        crawled.append(page.strip().lower())
         pg = Page(page, site)
         pg.analyze()
         pg.talk('normal')
 
     sorted_words = sorted(wordcount.iteritems(), key=itemgetter(1), reverse=True)
-    sorted_two_ngrams = sorted(two_ngram.iteritems())
-    sorted_three_ngrams = sorted(three_ngram.iteritems())
+    sorted_two_ngrams = sorted(two_ngram.iteritems(), key=itemgetter(1), reverse=True)
+    sorted_three_ngrams = sorted(three_ngram.iteritems(), key=itemgetter(1), reverse=True)
 
     for w in sorted_words:
-        print "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
+        if w[1] > 1:
+            print "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
 
     for w, v in sorted_two_ngrams:
-        print "{0}\t{1}".format(w, v)
+        if v > 1:
+            print "{0}\t{1}".format(w.encode('utf-8'), v)
 
     for w, v in sorted_three_ngrams:
-        print "{0}\t{1}".format(w, v)
+        if v > 1:
+            print "{0}\t{1}".format(w.encode('utf-8'), v)
 
 if __name__ == "__main__":
     site = ''
