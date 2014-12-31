@@ -8,7 +8,7 @@ from string import maketrans, punctuation
 from operator import itemgetter
 from re import sub, match
 from nltk import stem
-from json import loads
+from json import loads, dumps
 from collections import Counter
 import re
 import sys
@@ -103,7 +103,7 @@ class Page(object):
             if len(self.warnings) > 0:
                 print "{0}\t{1}".format(self.url, self.warnings)
         elif output == 'normal':
-            print "{0}\t{1}\t{2}".format(self.url, self.social, self.warnings)
+            print dumps({self.url: [self.social, self.warnings, ]}, indent=4, separators=(',', ': ')) + ","
         else:
             print "I don't know what {0} is.".format(output)
 
@@ -237,8 +237,7 @@ class Page(object):
         # return 1 if active, 0 if passive, -1 if indeterminate (rare)
         
         if len(nltk.sent_tokenize(sentence)) > 1:
-            warnings.warn("Subroutine voice() only accepts single setences.", UserWarning)
-            return False
+            return None
         
         tags0  = numpy.asarray( nltk.pos_tag(nltk.word_tokenize(sentence)) )
         tags = tags0[ numpy.where( -numpy.in1d( tags0[:,1], ['RB', 'RBR', 'RBS', 'TO'] ) ) ] # remove adverbs, 'TO'
@@ -306,7 +305,7 @@ class Page(object):
 
         for s in sentences:
             if self.is_passive_voice(s) == True:
-                self.warn('Passive voice is being used in {0}'.format(s.encode('utf-8')))
+                self.warn('Passive voice is being used in: {0}'.format(s.encode('utf-8')))
 
     def analyze_title(self):
         """
@@ -329,7 +328,7 @@ class Page(object):
             self.warn('Title tag is too long')
 
         if t in page_titles:
-            self.warn('Duplicate page title')
+            self.warn('Duplicate page title: {0}'.format(t))
             return
 
         page_titles.append(t)
@@ -355,7 +354,7 @@ class Page(object):
             self.warn('Description is too long')
 
         if d in page_descriptions:
-            self.warn('Duplicate description')
+            self.warn('Duplicate description: {0}'.format(d))
             return
 
         page_descriptions.append(d)
@@ -389,10 +388,10 @@ class Page(object):
 
         for image in images:
             if 'alt' not in image:
-                self.warn('Image missing alt')
+                self.warn('Image missing alt tag: {0}'.format(image['src']))
 
             if 'title' not in image:
-                self.warn('Image missing title')
+                self.warn('Image missing title tag: {0}'.format(image['src']))
 
     def analyze_h1_tags(self, bs):
         """
@@ -411,7 +410,7 @@ class Page(object):
 
         for tag in anchors:
             if 'title' not in tag:
-                self.warn('Anchor missing title tag')
+                self.warn('Anchor missing title tag: {0}'.format(tag['href']))
 
             if self.site not in tag['href'] and ':' in tag['href']:
                 continue
@@ -509,5 +508,3 @@ if __name__ == "__main__":
         exit()
 
     main(site, sitemap)
-
-
