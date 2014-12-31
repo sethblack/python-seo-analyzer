@@ -432,6 +432,9 @@ class Page(object):
         if domain[-1] == '/':
             domain = domain[:-1]
 
+        if relative_path[0] == '?':
+            return '{0}{1}'.format(self.url, relative_path)
+
         if relative_path[0] != '/':
             relative_path = '/{0}'.format(relative_path)
 
