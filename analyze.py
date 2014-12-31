@@ -387,10 +387,10 @@ class Page(object):
         images = bs.find_all('img')
 
         for image in images:
-            if 'alt' not in image:
+            if len(image.get('alt', '')) == 0:
                 self.warn('Image missing alt tag: {0}'.format(image['src']))
 
-            if 'title' not in image:
+            if len(image.get('title', '')) == 0:
                 self.warn('Image missing title tag: {0}'.format(image['src']))
 
     def analyze_h1_tags(self, bs):
@@ -409,7 +409,7 @@ class Page(object):
         anchors = bs.find_all('a', href=True)
 
         for tag in anchors:
-            if 'title' not in tag:
+            if len(tag.get('title', '')) == 0:
                 self.warn('Anchor missing title tag: {0}'.format(tag['href']))
 
             if self.site not in tag['href'] and ':' in tag['href']:
