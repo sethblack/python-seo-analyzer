@@ -354,7 +354,7 @@ class Page(object):
             self.warn('Description is too long')
 
         if d in page_descriptions:
-            self.warn('Duplicate description: {0}'.format(d))
+            self.warn('Duplicate description: {0}'.format(d.encode('utf-8')))
             return
 
         page_descriptions.append(d)
