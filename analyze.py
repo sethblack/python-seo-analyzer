@@ -152,21 +152,22 @@ class Page(object):
         # remove comments, they screw with BeautifulSoup
         clean_html = sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
 
-        soup = BeautifulSoup(clean_html)
+        soup_lower = BeautifulSoup(clean_html.lower())
+        soup_unmodified = BeautifulSoup(clean_html)
 
-        texts = soup.findAll(text=True)
+        texts = soup_lower.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
 
         self.process_text(visible_text)
 
-        self.populate(soup)
+        self.populate(soup_lower)
 
         self.analyze_title()
         self.analyze_description()
         self.analyze_keywords()
-        self.analyze_a_tags(soup)
-        self.analyze_img_tags(soup)
-        self.analyze_h1_tags(soup)
+        self.analyze_a_tags(soup_unmodified)
+        self.analyze_img_tags(soup_lower)
+        self.analyze_h1_tags(soup_lower)
         self.social_shares()
 
     def social_shares(self):
