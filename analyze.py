@@ -138,7 +138,9 @@ class Page(object):
             self.warn('Returned 404')
             return
 
-        encoding = page.headers['content-type'].split('charset=')[-1]
+        encoding = 'ascii'
+        if 'content-type' in page.headers:
+        	encoding = page.headers['content-type'].split('charset=')[-1]
 
         if encoding not in('text/html', 'text/plain'):
             try:
