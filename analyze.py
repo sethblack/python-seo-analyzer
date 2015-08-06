@@ -437,13 +437,13 @@ class Page(object):
         if domain[-1] == '/':
             domain = domain[:-1]
 
-        if relative_path[0] == '?':
+        if len(relative_path) > 0 and relative_path[0] == '?':
             if '?' in self.url:
                 return '{0}{1}'.format(self.url[:self.url.index('?')], relative_path)
 
             return '{0}{1}'.format(self.url, relative_path)
 
-        if relative_path[0] != '/':
+        if len(relative_path) > 0 and relative_path[0] != '/':
             relative_path = '/{0}'.format(relative_path)
 
         return '{0}{1}'.format(domain, relative_path)
