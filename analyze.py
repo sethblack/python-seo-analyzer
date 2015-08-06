@@ -243,7 +243,11 @@ class Page(object):
             return None
 
         tags0  = numpy.asarray( nltk.pos_tag(nltk.word_tokenize(sentence)) )
-        tags = tags0[ numpy.where( -numpy.in1d( tags0[:,1], ['RB', 'RBR', 'RBS', 'TO'] ) ) ] # remove adverbs, 'TO'
+        try:
+            tags = tags0[ numpy.where( -numpy.in1d( tags0[:,1], ['RB', 'RBR', 'RBS', 'TO'] ) ) ] # remove adverbs, 'TO'
+        except IndexError:
+            self.warn("tags0 is wrong: {0}".format(tags0))
+            return None
 
         if len(tags) < 2: # too short to really know.
             return False
