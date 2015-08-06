@@ -391,10 +391,10 @@ class Page(object):
 
         for image in images:
             if len(image.get('alt', '')) == 0:
-                self.warn('Image missing alt tag: {0}'.format(image['src']))
+                self.warn('Image missing alt tag: {0}'.format(image['src'] if 'src' in image else ''))
 
             if len(image.get('title', '')) == 0:
-                self.warn('Image missing title tag: {0}'.format(image['src']))
+                self.warn('Image missing title tag: {0}'.format(image['src'] if 'src' in image else ''))
 
     def analyze_h1_tags(self, bs):
         """
