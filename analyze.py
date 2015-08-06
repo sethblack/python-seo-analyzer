@@ -238,22 +238,22 @@ class Page(object):
     def is_passive_voice(self, sentence):
         # determine if a sentence is (probably) in "active" or "passive" voice
         # return 1 if active, 0 if passive, -1 if indeterminate (rare)
-        
+
         if len(nltk.sent_tokenize(sentence)) > 1:
             return None
-        
+
         tags0  = numpy.asarray( nltk.pos_tag(nltk.word_tokenize(sentence)) )
         tags = tags0[ numpy.where( -numpy.in1d( tags0[:,1], ['RB', 'RBR', 'RBS', 'TO'] ) ) ] # remove adverbs, 'TO'
 
         if len(tags) < 2: # too short to really know.
             return False
-        
+
         to_be = ['be','am','is','are','was','were','been','has','have','had','do','did','does','can','could','shall','should','will','would','may','might','must']
 
         WH = [ 'WDT', 'WP', 'WP$', 'WRB', ]
         VB = ['VBG', 'VBD', 'VBN', 'VBP', 'VBZ', 'VB', ]
         VB_nogerund = ['VBD', 'VBN', 'VBP', 'VBZ', ]
-        
+
         logic0 =  numpy.in1d(tags[:-1,1],['IN'])*numpy.in1d(tags[1:,1],WH) # passive if true
         if numpy.any(logic0):
             return True
@@ -261,7 +261,7 @@ class Page(object):
         logic1 = numpy.in1d(tags[:-2,0],to_be)*numpy.in1d(tags[1:-1,1],VB_nogerund)*numpy.in1d(tags[2:,1],VB) # chain of three verbs, active if true and previous not
         if numpy.any(logic1):
             return False
-        
+
         if numpy.any(numpy.in1d(tags[:,0],to_be))*numpy.any(numpy.in1d(tags[:,1],['VBN'])): ## 'to be' + past participle verb
             return True
 
@@ -415,10 +415,12 @@ class Page(object):
             if len(tag.get('title', '')) == 0:
                 self.warn('Anchor missing title tag: {0}'.format(tag['href']))
 
-            if self.site not in tag['href'] and ':' in tag['href']:
+            tag_href = tag['href'].encode('utf-8')
+
+            if self.site not in tag_href and ':' in tag_href:
                 continue
 
-            modified_url = self.rel_to_abs_url(tag['href'])
+            modified_url = self.rel_to_abs_url(tag_href)
 
             if modified_url in pages_crawled:
                 continue
