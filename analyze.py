@@ -412,10 +412,10 @@ class Page(object):
         anchors = bs.find_all('a', href=True)
 
         for tag in anchors:
-            if len(tag.get('title', '')) == 0:
-                self.warn('Anchor missing title tag: {0}'.format(tag['href']))
-
             tag_href = tag['href'].encode('utf-8')
+
+            if len(tag.get('title', '')) == 0:
+                self.warn('Anchor missing title tag: {0}'.format(tag_href))
 
             if self.site not in tag_href and ':' in tag_href:
                 continue
