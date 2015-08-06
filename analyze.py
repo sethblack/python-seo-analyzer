@@ -135,6 +135,9 @@ class Page(object):
 
         pages_crawled.append(self.url)
 
+        if self.url.startswith('//'):
+            self.url = "http:{0}".format(self.url)
+
         try:
             page = urlopen(self.url)
         except urllib2.HTTPError:
