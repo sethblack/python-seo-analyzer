@@ -111,7 +111,10 @@ class Page(object):
         """
         Populates the instance variables from BeautifulSoup
         """
-        self.title = bs.title.text
+        try:
+            self.title = bs.title.text
+        except AttributeError:
+            self.title = 'No Title'
 
         descr = bs.findAll('meta', attrs={'name':'description'})
 
