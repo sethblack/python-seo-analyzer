@@ -2,8 +2,7 @@
 
 from bs4 import BeautifulSoup
 from xml.dom import minidom
-from urllib2 import urlopen
-import urllib2
+import requests
 from string import maketrans, punctuation
 from operator import itemgetter
 from re import sub, match
@@ -139,29 +138,29 @@ class Page(object):
             self.url = "http:{0}".format(self.url)
 
         try:
-            page = urlopen(self.url)
-        except urllib2.HTTPError:
-            self.warn('Returned 404')
+            page = requests.get(self.url)
+        except requests.exceptions.HTTPError as e:
+            self.warn(u'Returned {0}'.format(page.status_code))
             return
 
         encoding = 'ascii'
         if 'content-type' in page.headers:
         	encoding = page.headers['content-type'].split('charset=')[-1]
 
-        if encoding not in('text/html', 'text/plain'):
+        if encoding not in ('text/html', 'text/plain', 'UTF-8'):
             try:
                 raw_html = unicode(page.read(), encoding)
             except:
-                self.warn('Can not read {0}'.format(encoding))
+                self.warn(u'Can not read {0}'.format(encoding))
                 return
         else:
-            raw_html = page.read()
+            raw_html = page.text
 
         # remove comments, they screw with BeautifulSoup
         clean_html = sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
 
-        soup_lower = BeautifulSoup(clean_html.lower())
-        soup_unmodified = BeautifulSoup(clean_html)
+        soup_lower = BeautifulSoup(clean_html.lower(), "html.parser")
+        soup_unmodified = BeautifulSoup(clean_html, "html.parser")
 
         texts = soup_lower.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
@@ -185,7 +184,7 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = urlopen('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls=%s&format=json'
+            page = requests.get('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls=%s&format=json'
                 % self.url)
             fb_data = loads(page.read())
             fb_share_count = fb_data[0]['share_count']
@@ -206,8 +205,8 @@ class Page(object):
         twitter_count = 0
 
         try:
-            page = urlopen('http://urls.api.twitter.com/1/urls/count.json?url=%s&callback=twttr.receiveCount' % self.url)
-            page_text = page.read()
+            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url=%s&callback=twttr.receiveCount' % self.url)
+            page_text = page.text
             twitter_count = loads(page_text[page_text.index('{'):-2])['count']
         except:
             pass
@@ -220,8 +219,8 @@ class Page(object):
         su_views = 0
 
         try:
-            page = urlopen('http://www.stumbleupon.com/services/1.01/badge.getinfo?url=%s' % self.url)
-            su_data = loads(page.read())
+            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url=%s' % self.url)
+            su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
         except:
@@ -318,7 +317,7 @@ class Page(object):
 
         for s in sentences:
             if self.is_passive_voice(s) == True:
-                self.warn('Passive voice is being used in: {0}'.format(s.encode('utf-8')))
+                self.warn(u'Passive voice is being used in: {0}'.format(s))
 
     def analyze_title(self):
         """
@@ -333,15 +332,15 @@ class Page(object):
         length = len(t)
 
         if length == 0:
-            self.warn('Missing title tag')
+            self.warn(u'Missing title tag')
             return
         elif length < 10:
-            self.warn('Title tag is too short')
+            self.warn(u'Title tag is too short')
         elif length > 70:
-            self.warn('Title tag is too long')
+            self.warn(u'Title tag is too long')
 
         if t in page_titles:
-            self.warn('Duplicate page title: {0}'.format(t))
+            self.warn(u'Duplicate page title: {0}'.format(t))
             return
 
         page_titles.append(t)
@@ -359,15 +358,15 @@ class Page(object):
         length = len(d)
 
         if length == 0:
-            self.warn('Missing description')
+            self.warn(u'Missing description')
             return
         elif length < 140:
-            self.warn('Description is too short')
+            self.warn(u'Description is too short')
         elif length > 255:
-            self.warn('Description is too long')
+            self.warn(u'Description is too long')
 
         if d in page_descriptions:
-            self.warn('Duplicate description: {0}'.format(d.encode('utf-8')))
+            self.warn(u'Duplicate description: {0}'.format(d.encode('utf-8')))
             return
 
         page_descriptions.append(d)
@@ -473,7 +472,7 @@ def getText(nodelist):
 
 def main(site, sitemap):
     if sitemap is not None:
-        page = urlopen(sitemap)
+        page = requests.get(sitemap)
         xml_raw = page.read()
         xmldoc = minidom.parseString(xml_raw)
         urls = xmldoc.getElementsByTagName('loc')
