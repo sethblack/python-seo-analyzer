@@ -11,9 +11,7 @@ Installation
 ### PIP
 
 ```
-pip install BeautifulSoup4
-pip install nltk
-pip install numpy
+pip install -r requirements.txt
 ```
 
 ### Python Shell
