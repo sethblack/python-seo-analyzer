@@ -366,7 +366,7 @@ class Page(object):
             self.warn(u'Description is too long')
 
         if d in page_descriptions:
-            self.warn(u'Duplicate description: {0}'.format(d.encode('utf-8')))
+            self.warn(u'Duplicate description: {0}'.format(d))
             return
 
         page_descriptions.append(d)
@@ -473,7 +473,7 @@ def getText(nodelist):
 def main(site, sitemap):
     if sitemap is not None:
         page = requests.get(sitemap)
-        xml_raw = page.read()
+        xml_raw = page.text
         xmldoc = minidom.parseString(xml_raw)
         urls = xmldoc.getElementsByTagName('loc')
 
