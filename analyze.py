@@ -73,6 +73,7 @@ ENGLISH_STOP_WORDS = frozenset([
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
 sentence_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
+
 class Page(object):
     """
     Container for each page and the analyzer.
@@ -115,12 +116,12 @@ class Page(object):
         except AttributeError:
             self.title = 'No Title'
 
-        descr = bs.findAll('meta', attrs={'name':'description'})
+        descr = bs.findAll('meta', attrs={'name': 'description'})
 
         if len(descr) > 0:
             self.description = descr[0].get('content')
 
-        keywords = bs.findAll('meta', attrs={'name':'keywords'})
+        keywords = bs.findAll('meta', attrs={'name': 'keywords'})
 
         if len(keywords) > 0:
             self.keywords = keywords[0].get('content')
@@ -145,7 +146,7 @@ class Page(object):
 
         encoding = 'ascii'
         if 'content-type' in page.headers:
-        	encoding = page.headers['content-type'].split('charset=')[-1]
+            encoding = page.headers['content-type'].split('charset=')[-1]
 
         if encoding not in ('text/html', 'text/plain', 'UTF-8'):
             try:
@@ -184,8 +185,7 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls=%s&format=json'
-                % self.url)
+            page = requests.get('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={}&format=json'.format(self.url))
             fb_data = loads(page.read())
             fb_share_count = fb_data[0]['share_count']
             fb_comment_count = fb_data[0]['comment_count']
@@ -200,7 +200,7 @@ class Page(object):
             'likes': fb_like_count,
             'clicks': fb_click_count,
         }
-        #print 'facebook\t{0}\t{1}\t{2}\t{3}\t{4}'.format(self.url, fb_share_count, fb_comment_count, fb_like_count, fb_click_count)
+        # print 'facebook\t{0}\t{1}\t{2}\t{3}\t{4}'.format(self.url, fb_share_count, fb_comment_count, fb_like_count, fb_click_count)
 
         twitter_count = 0
 
@@ -214,7 +214,7 @@ class Page(object):
         self.social['twitter'] = {
             'count': twitter_count,
         }
-        #print 'twitter\t{0}\t{1}'.format(self.url, twitter_count)
+        # print 'twitter\t{0}\t{1}'.format(self.url, twitter_count)
 
         su_views = 0
 
@@ -226,7 +226,7 @@ class Page(object):
         except:
             pass
 
-        #print 'stumbleupon\t{0}\t{1}'.format(self.url, su_views)
+        # print 'stumbleupon\t{0}\t{1}'.format(self.url, su_views)
         self.social['stumbleupon'] = {
             'stumbles': su_views,
         }
@@ -247,31 +247,34 @@ class Page(object):
         if len(nltk.sent_tokenize(sentence)) > 1:
             return None
 
-        tags0  = numpy.asarray( nltk.pos_tag(nltk.word_tokenize(sentence)) )
+        tags0 = numpy.asarray(nltk.pos_tag(nltk.word_tokenize(sentence)))
         try:
-            tags = tags0[ numpy.where( -numpy.in1d( tags0[:,1], ['RB', 'RBR', 'RBS', 'TO'] ) ) ] # remove adverbs, 'TO'
+            tags = tags0[numpy.where(-numpy.in1d(tags0[:, 1], ['RB', 'RBR', 'RBS', 'TO', ]))]  # remove adverbs, 'TO'
         except IndexError:
             self.warn("tags0 is wrong: {0}".format(tags0))
             return None
 
-        if len(tags) < 2: # too short to really know.
+        if len(tags) < 2:  # too short to really know.
             return False
 
-        to_be = ['be','am','is','are','was','were','been','has','have','had','do','did','does','can','could','shall','should','will','would','may','might','must']
+        to_be = ['be', 'am', 'is', 'are', 'was', 'were', 'been', 'has',
+                 'have', 'had', 'do', 'did', 'does', 'can', 'could',
+                 'shall', 'should', 'will', 'would', 'may', 'might',
+                 'must', ]
 
-        WH = [ 'WDT', 'WP', 'WP$', 'WRB', ]
+        WH = ['WDT', 'WP', 'WP$', 'WRB', ]
         VB = ['VBG', 'VBD', 'VBN', 'VBP', 'VBZ', 'VB', ]
         VB_nogerund = ['VBD', 'VBN', 'VBP', 'VBZ', ]
 
-        logic0 =  numpy.in1d(tags[:-1,1],['IN'])*numpy.in1d(tags[1:,1],WH) # passive if true
+        logic0 = numpy.in1d(tags[:-1, 1], ['IN']) * numpy.in1d(tags[1:, 1], WH)  # passive if true
         if numpy.any(logic0):
             return True
 
-        logic1 = numpy.in1d(tags[:-2,0],to_be)*numpy.in1d(tags[1:-1,1],VB_nogerund)*numpy.in1d(tags[2:,1],VB) # chain of three verbs, active if true and previous not
+        logic1 = numpy.in1d(tags[:-2, 0], to_be) * numpy.in1d(tags[1:-1, 1], VB_nogerund) * numpy.in1d(tags[2:, 1], VB)  # chain of three verbs, active if true and previous not
         if numpy.any(logic1):
             return False
 
-        if numpy.any(numpy.in1d(tags[:,0],to_be))*numpy.any(numpy.in1d(tags[:,1],['VBN'])): ## 'to be' + past participle verb
+        if numpy.any(numpy.in1d(tags[:, 0], to_be)) * numpy.any(numpy.in1d(tags[:, 1], ['VBN'])):  # 'to be' + past participle verb
             return True
 
         # if no clauses have tripped thus far, it's probably active voice:
@@ -316,7 +319,7 @@ class Page(object):
         sentences = sentence_tokenizer.tokenize(page_text.decode('utf-8'))
 
         for s in sentences:
-            if self.is_passive_voice(s) == True:
+            if self.is_passive_voice(s) is True:
                 self.warn(u'Passive voice is being used in: {0}'.format(s))
 
     def analyze_title(self):
@@ -460,6 +463,7 @@ class Page(object):
     def warn(self, warning):
         self.warnings.append(warning)
 
+
 def getText(nodelist):
     """
     Stolen from the minidom documentation
@@ -469,6 +473,7 @@ def getText(nodelist):
         if node.nodeType == node.TEXT_NODE:
             rc.append(node.data)
     return ''.join(rc)
+
 
 def main(site, sitemap):
     if sitemap is not None:
