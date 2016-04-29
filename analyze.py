@@ -160,7 +160,7 @@ class Page(object):
         if 'content-type' in page.headers:
             encoding = page.headers['content-type'].split('charset=')[-1]
 
-        if encoding not in ('text/html', 'text/plain', 'UTF-8'):
+        if encoding.lower() not in ('text/html', 'text/plain', 'utf-8'):
             try:
                 raw_html = unicode(page.read(), encoding)
             except:
