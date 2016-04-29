@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
 from bs4 import BeautifulSoup
-from xml.dom import minidom
-import requests
-from string import maketrans, punctuation
-from operator import itemgetter
-from re import sub, match
-from nltk import stem
-from json import loads, dumps
 from collections import Counter
-import re
-import sys
+from nltk import stem
+from operator import itemgetter
+from string import maketrans, punctuation
+from xml.dom import minidom
+
+import json
 import nltk
 import numpy
+import re
+import requests
+import sys
+
 
 wordcount = {}
 two_ngram = Counter()
@@ -95,17 +96,28 @@ class Page(object):
 
     def talk(self, output='all'):
         """
-        Print the results to stdout, tab delimited
+        Returns a dictionary that can be printed
         """
+
+        return_val = {}
+
         if output == 'all':
-            print "{0}\t{1}\t{2}\t{3}\t{4}".format(self.url, self.title, self.description, self.keywords, self.warnings)
+            return {
+                'url': self.url,
+                'title': self.title,
+                'description': self.description,
+                'keywords': self.keywords,
+                'warnings': self.warnings,
+            }
         elif output == 'warnings':
-            if len(self.warnings) > 0:
-                print "{0}\t{1}".format(self.url, self.warnings)
+            return {
+                'url': self.url,
+                'warnings': self.warnings,
+            }
         elif output == 'normal':
-            print dumps({self.url: [self.social, self.warnings, ]}, indent=4, separators=(',', ': ')) + ","
+            return {self.url: [self.social, self.warnings, ]}
         else:
-            print "I don't know what {0} is.".format(output)
+            return {'error': "I don't know what {0} is.".format(output)}
 
     def populate(self, bs):
         """
@@ -158,7 +170,7 @@ class Page(object):
             raw_html = page.text
 
         # remove comments, they screw with BeautifulSoup
-        clean_html = sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
+        clean_html = re.sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
 
         soup_lower = BeautifulSoup(clean_html.lower(), "html.parser")
         soup_unmodified = BeautifulSoup(clean_html, "html.parser")
@@ -488,6 +500,7 @@ def main(site, sitemap):
     pages_to_crawl.append(site)
 
     crawled = []
+    output = {'pages': [], 'keywords': []}
 
     for page in pages_to_crawl:
         if page.strip().lower() in crawled:
@@ -500,23 +513,40 @@ def main(site, sitemap):
         crawled.append(page.strip().lower())
         pg = Page(page, site)
         pg.analyze()
-        pg.talk('normal')
+        output['pages'].append(pg.talk('normal'))
 
     sorted_words = sorted(wordcount.iteritems(), key=itemgetter(1), reverse=True)
     sorted_two_ngrams = sorted(two_ngram.iteritems(), key=itemgetter(1), reverse=True)
     sorted_three_ngrams = sorted(three_ngram.iteritems(), key=itemgetter(1), reverse=True)
 
+    output['keywords'] = []
+
     for w in sorted_words:
         if w[1] > 1:
-            print "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
+            output['keywords'].append({
+                'word': stem_to_word[w[0]]['word'].encode('utf-8'),
+                'count': w[1],
+            })
+            # "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
 
     for w, v in sorted_two_ngrams:
         if v > 1:
-            print "{0}\t{1}".format(w.encode('utf-8'), v)
+            output['keywords'].append({
+                'word': w.encode('utf-8'),
+                'count': v,
+            })
+            # print "{0}\t{1}".format(w.encode('utf-8'), v)
 
     for w, v in sorted_three_ngrams:
         if v > 1:
-            print "{0}\t{1}".format(w.encode('utf-8'), v)
+            output['keywords'].append({
+                'word': w.encode('utf-8'),
+                'count': v,
+            })
+            # print "{0}\t{1}".format(w.encode('utf-8'), v)
+
+    print json.dumps(output, indent=4, separators=(',', ': '))
+
 
 if __name__ == "__main__":
     site = ''
