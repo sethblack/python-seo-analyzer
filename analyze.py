@@ -197,7 +197,7 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={}&format=json'.format(self.url))
+            page = requests.get('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url))
             fb_data = loads(page.read())
             fb_share_count = fb_data[0]['share_count']
             fb_comment_count = fb_data[0]['comment_count']
@@ -217,7 +217,7 @@ class Page(object):
         twitter_count = 0
 
         try:
-            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url=%s&callback=twttr.receiveCount' % self.url)
+            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url={0}&callback=twttr.receiveCount'.format(self.url))
             page_text = page.text
             twitter_count = loads(page_text[page_text.index('{'):-2])['count']
         except:
@@ -231,7 +231,7 @@ class Page(object):
         su_views = 0
 
         try:
-            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url=%s' % self.url)
+            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
             su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
@@ -350,9 +350,9 @@ class Page(object):
             self.warn(u'Missing title tag')
             return
         elif length < 10:
-            self.warn(u'Title tag is too short')
+            self.warn(u'Title tag is too short (less than 10 characters): {0}'.format(t))
         elif length > 70:
-            self.warn(u'Title tag is too long')
+            self.warn(u'Title tag is too long (more than 70 characters): {0}'.format(t))
 
         if t in page_titles:
             self.warn(u'Duplicate page title: {0}'.format(t))
@@ -376,9 +376,9 @@ class Page(object):
             self.warn(u'Missing description')
             return
         elif length < 140:
-            self.warn(u'Description is too short')
+            self.warn(u'Description is too short (less than 140 characters): {0}'.format(d))
         elif length > 255:
-            self.warn(u'Description is too long')
+            self.warn(u'Description is too long (more than 255 characters): {0}'.format(d))
 
         if d in page_descriptions:
             self.warn(u'Duplicate description: {0}'.format(d))
@@ -398,8 +398,8 @@ class Page(object):
         # calculate the length of keywords once
         length = len(k)
 
-        if length == 0:
-            self.warn('Missing keywords')
+        if length > 0:
+            self.warn('Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(k))
 
     def visible_tags(self, element):
         if element.parent.name in ['style', 'script', '[document]']:
@@ -414,11 +414,18 @@ class Page(object):
         images = bs.find_all('img')
 
         for image in images:
+            src = ''
+            if 'src' in image: src = image['src'] 
+            elif 'data-src' in image: src = image['data-src']
+            else: src = image
+            
             if len(image.get('alt', '')) == 0:
-                self.warn('Image missing alt tag: {0}'.format(image['src'] if 'src' in image else ''))
+                self.warn('Image missing alt tag: {0}'.format(src))
 
-            if len(image.get('title', '')) == 0:
-                self.warn('Image missing title tag: {0}'.format(image['src'] if 'src' in image else ''))
+            # note: title tags on images are not as relevant to search engines as alt tags.
+            # ref: https://webmasters.googleblog.com/2007/12/using-alt-attributes-smartly.html
+            # if len(image.get('title', '')) == 0:
+            #    self.warn('Image missing title tag: {0}'.format(src))
 
     def analyze_h1_tags(self, bs):
         """
@@ -437,9 +444,13 @@ class Page(object):
 
         for tag in anchors:
             tag_href = tag['href'].encode('utf-8')
+            tag_text = tag.text.lower().strip()
 
             if len(tag.get('title', '')) == 0:
                 self.warn('Anchor missing title tag: {0}'.format(tag_href))
+                
+            if tag_text in ['click here', 'page', 'article']:
+                self.warn('Anchor text contains generic text: {0}'.format(tag_text))
 
             if self.site not in tag_href and ':' in tag_href:
                 continue
