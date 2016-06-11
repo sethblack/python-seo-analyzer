@@ -197,8 +197,8 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('http://api.ak.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url))
-            fb_data = loads(page.read())
+            page = requests.get('http://api.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url))
+            fb_data = json.loads(page.text)
             fb_share_count = fb_data[0]['share_count']
             fb_comment_count = fb_data[0]['comment_count']
             fb_like_count = fb_data[0]['like_count']
