@@ -142,6 +142,9 @@ class Page(object):
         """
         Analyze the page and populate the warnings list
         """
+        if self.url.startswith('mailto:'):
+            return
+
         if self.url in pages_crawled:
             return
 
