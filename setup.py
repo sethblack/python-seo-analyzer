@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 
 from distutils.core import setup
+from distutils.command.install import install as _install
 
-class PostInstallCommand(install):
+class PostInstallCommand(_install):
     """Post-installation for installation mode."""
     def run(self):
+        _install.run(self)
+
         import nltk
         nltk.download('punkt')
         nltk.download('porter_test')
         nltk.download('averaged_perceptron_tagger')
-        install.run(self)
 
 setup(
     name = 'pyseoanalyzer',
-    version = '3.0',
+    version = '3.0.1',
     description = 'An SEO tool that gives you general Search Engine Optimization directions.',
     author = 'Seth Black',
     author_email = 'sblack@sethserver.com',
@@ -23,10 +25,10 @@ setup(
     install_requires=[
         'BeautifulSoup4', 'nltk', 'numpy', 'requests',
     ],
-    cmdclass={
+    cmdclass ={ 
         'install': PostInstallCommand,
     },
-    scripts=['seoanalyzer/seoanalyze'],
+    scripts = ['seoanalyzer/seoanalyze'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
