@@ -519,8 +519,6 @@ def analyze(site, sitemap=None):
         pg.analyze()
         output['pages'].append(pg.talk('normal'))
 
-        print('...done')
-
     sorted_words = sorted(wordcount.items(), key=itemgetter(1), reverse=True)
     sorted_two_ngrams = sorted(two_ngram.items(), key=itemgetter(1), reverse=True)
     sorted_three_ngrams = sorted(three_ngram.items(), key=itemgetter(1), reverse=True)
