@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+
+from seoanalyzer import analyze
+
+if __name__ == "__main__":
+    site = ''
+    sitemap = ''
+
+    if len(sys.argv) == 2:
+        site = sys.argv[1]
+        sitemap = None
+    elif len(sys.argv) == 3:
+        site = sys.argv[1]
+        sitemap = site + sys.argv[2]
+    else:
+        print("Usage: seoanalyzer http://www.site.tld [sitemap]")
+        exit()
+
+    output = analyze(site, sitemap)
+
+    print(json.dumps(output, indent=4, separators=(',', ': ')))

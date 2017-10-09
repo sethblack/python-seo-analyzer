@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from distutils.core import setup
 
@@ -14,6 +14,7 @@ setup(
     install_requires=[
         'BeautifulSoup4', 'nltk', 'numpy', 'requests',
     ],
+    scripts=['seoanalyzer/seoanalyze'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",

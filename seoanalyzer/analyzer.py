@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from bs4 import BeautifulSoup
 from collections import Counter
@@ -496,7 +496,7 @@ def getText(nodelist):
     return ''.join(rc)
 
 
-def analyze(site, sitemap):
+def analyze(site, sitemap=None):
     if sitemap is not None:
         page = requests.get(sitemap)
         xml_raw = page.text
