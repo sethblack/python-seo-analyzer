@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(
-    name = 'seoanalyzer',
+    name = 'pyseoanalyzer',
     version = '3.0',
     description = 'An SEO tool that gives you general Search Engine Optimization directions.',
     author = 'Seth Black',
