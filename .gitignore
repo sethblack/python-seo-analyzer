@@ -36,3 +36,6 @@ nosetests.xml
 
 # Output directory
 output/
+build/
+
+.DS_Store

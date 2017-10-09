@@ -13,7 +13,6 @@ import re
 import requests
 import sys
 
-
 wordcount = {}
 two_ngram = Counter()
 three_ngram = Counter()
@@ -199,7 +198,7 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('http://api.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url))
+            page = requests.get('http://api.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url.decode('utf-8')))
             fb_data = json.loads(page.text)
             fb_share_count = fb_data[0]['share_count']
             fb_comment_count = fb_data[0]['comment_count']
@@ -214,12 +213,11 @@ class Page(object):
             'likes': fb_like_count,
             'clicks': fb_click_count,
         }
-        # print 'facebook\t{0}\t{1}\t{2}\t{3}\t{4}'.format(self.url, fb_share_count, fb_comment_count, fb_like_count, fb_click_count)
 
         twitter_count = 0
 
         try:
-            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url={0}&callback=twttr.receiveCount'.format(self.url))
+            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url={0}&callback=twttr.receiveCount'.format(self.url.decode('utf-8')))
             page_text = page.text
             twitter_count = loads(page_text[page_text.index('{'):-2])['count']
         except:
@@ -228,19 +226,17 @@ class Page(object):
         self.social['twitter'] = {
             'count': twitter_count,
         }
-        # print 'twitter\t{0}\t{1}'.format(self.url, twitter_count)
 
         su_views = 0
 
         try:
-            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
+            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url.decode('utf-8')))
             su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
         except:
             pass
 
-        # print 'stumbleupon\t{0}\t{1}'.format(self.url, su_views)
         self.social['stumbleupon'] = {
             'stumbles': su_views,
         }
@@ -401,7 +397,7 @@ class Page(object):
         length = len(k)
 
         if length > 0:
-            self.warn('Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(k))
+            self.warn(u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(k))
 
     def visible_tags(self, element):
         if element.parent.name in ['style', 'script', '[document]']:
@@ -449,10 +445,10 @@ class Page(object):
             tag_text = tag.text.lower().strip()
 
             if len(tag.get('title', '')) == 0:
-                self.warn('Anchor missing title tag: {0}'.format(tag_href.decode('utf-8')))
+                self.warn('Anchor missing title tag: {0}'.format(tag_href))
                 
             if tag_text in ['click here', 'page', 'article']:
-                self.warn('Anchor text contains generic text: {0}'.format(tag_text.decode('utf-8')))
+                self.warn('Anchor text contains generic text: {0}'.format(tag_text))
 
             if bytes(self.site, encoding='utf-8') not in tag_href and b':' in tag_href:
                 continue
@@ -500,7 +496,7 @@ def getText(nodelist):
     return ''.join(rc)
 
 
-def main(site, sitemap):
+def analyze(site, sitemap):
     if sitemap is not None:
         page = requests.get(sitemap)
         xml_raw = page.text
@@ -540,7 +536,6 @@ def main(site, sitemap):
                 'word': stem_to_word[w[0]]['word'],
                 'count': w[1],
             })
-            # "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
 
     for w, v in sorted_two_ngrams:
         if v > 1:
@@ -548,7 +543,6 @@ def main(site, sitemap):
                 'word': w,
                 'count': v,
             })
-            # print "{0}\t{1}".format(w.encode('utf-8'), v)
 
     for w, v in sorted_three_ngrams:
         if v > 1:
@@ -556,9 +550,8 @@ def main(site, sitemap):
                 'word': w,
                 'count': v,
             })
-            # print "{0}\t{1}".format(w.encode('utf-8'), v)
 
-    print(json.dumps(output, indent=4, separators=(',', ': ')))
+    return output
 
 
 if __name__ == "__main__":
@@ -575,4 +568,6 @@ if __name__ == "__main__":
         print("Usage: python analyze.py http://www.site.tld [sitemap]")
         exit()
 
-    main(site, sitemap)
+    output = analyze(site, sitemap)
+
+    print(json.dumps(output, indent=4, separators=(',', ': ')))
