@@ -2,9 +2,8 @@
 
 from bs4 import BeautifulSoup
 from collections import Counter
-from nltk import stem
 from operator import itemgetter
-from string import maketrans, punctuation
+from string import punctuation
 from xml.dom import minidom
 
 import json
@@ -21,7 +20,7 @@ three_ngram = Counter()
 pages_crawled = []
 pages_to_crawl = []
 stem_to_word = {}
-stemmer = stem.porter.PorterStemmer()
+stemmer = nltk.stem.porter.PorterStemmer()
 page_titles = []
 page_descriptions = []
 
@@ -91,7 +90,7 @@ class Page(object):
         self.keywords = u''
         self.warnings = []
         self.social = {}
-        self.translation = maketrans(punctuation, str(u' ' * len(punctuation)).encode('utf-8'))
+        self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
         super(Page, self).__init__()
 
     def talk(self, output='all'):
@@ -170,13 +169,13 @@ class Page(object):
                 self.warn(u'Can not read {0}'.format(encoding))
                 return
         else:
-            raw_html = page.text
+            raw_html = u'{}'.format(page.text)
 
         # remove comments, they screw with BeautifulSoup
-        clean_html = re.sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
+        clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)
 
-        soup_lower = BeautifulSoup(clean_html.lower(), "html.parser")
-        soup_unmodified = BeautifulSoup(clean_html, "html.parser")
+        soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser')
+        soup_unmodified = BeautifulSoup(clean_html, 'html.parser')
 
         texts = soup_lower.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
@@ -264,7 +263,7 @@ class Page(object):
 
         tags0 = numpy.asarray(nltk.pos_tag(nltk.word_tokenize(sentence)))
         try:
-            tags = tags0[numpy.where(-numpy.in1d(tags0[:, 1], ['RB', 'RBR', 'RBS', 'TO', ]))]  # remove adverbs, 'TO'
+            tags = tags0[numpy.where(~numpy.in1d(tags0[:, 1], ['RB', 'RBR', 'RBS', 'TO', ]))]  # remove adverbs, 'TO'
         except IndexError:
             self.warn("tags0 is wrong: {0}".format(tags0))
             return None
@@ -299,10 +298,10 @@ class Page(object):
         page_text = ''
 
         for element in vt:
-            page_text += element.encode('utf-8').lower() + ' '
+            page_text += element.lower() + u' '
 
-        tokens = self.tokenize(page_text.decode('utf-8'))
-        raw_tokens = self.raw_tokenize(page_text.decode('utf-8'))
+        tokens = self.tokenize(page_text)
+        raw_tokens = self.raw_tokenize(page_text)
 
         two_ngrams = self.getngrams(raw_tokens, 2)
 
@@ -319,7 +318,7 @@ class Page(object):
         freq_dist = nltk.FreqDist(tokens)
 
         for word in freq_dist:
-            root = stemmer.stem_word(word)
+            root = stemmer.stem(word)
 
             if root in stem_to_word and freq_dist[word] > stem_to_word[root]['count']:
                 stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
@@ -331,7 +330,7 @@ class Page(object):
             else:
                 wordcount[root] = freq_dist[word]
 
-        sentences = sentence_tokenizer.tokenize(page_text.decode('utf-8'))
+        sentences = sentence_tokenizer.tokenize(page_text)
 
         for s in sentences:
             if self.is_passive_voice(s) is True:
@@ -450,12 +449,12 @@ class Page(object):
             tag_text = tag.text.lower().strip()
 
             if len(tag.get('title', '')) == 0:
-                self.warn('Anchor missing title tag: {0}'.format(tag_href))
+                self.warn('Anchor missing title tag: {0}'.format(tag_href.decode('utf-8')))
                 
             if tag_text in ['click here', 'page', 'article']:
-                self.warn('Anchor text contains generic text: {0}'.format(tag_text))
+                self.warn('Anchor text contains generic text: {0}'.format(tag_text.decode('utf-8')))
 
-            if self.site not in tag_href and ':' in tag_href:
+            if bytes(self.site, encoding='utf-8') not in tag_href and b':' in tag_href:
                 continue
 
             modified_url = self.rel_to_abs_url(tag_href)
@@ -466,10 +465,10 @@ class Page(object):
             pages_to_crawl.append(modified_url)
 
     def rel_to_abs_url(self, link):
-        if ':' in link:
+        if b':' in link:
             return link
 
-        relative_path = link
+        relative_path = link.decode('utf-8')
         domain = self.site
 
         if domain[-1] == '/':
@@ -529,16 +528,16 @@ def main(site, sitemap):
         pg.analyze()
         output['pages'].append(pg.talk('normal'))
 
-    sorted_words = sorted(wordcount.iteritems(), key=itemgetter(1), reverse=True)
-    sorted_two_ngrams = sorted(two_ngram.iteritems(), key=itemgetter(1), reverse=True)
-    sorted_three_ngrams = sorted(three_ngram.iteritems(), key=itemgetter(1), reverse=True)
+    sorted_words = sorted(wordcount.items(), key=itemgetter(1), reverse=True)
+    sorted_two_ngrams = sorted(two_ngram.items(), key=itemgetter(1), reverse=True)
+    sorted_three_ngrams = sorted(three_ngram.items(), key=itemgetter(1), reverse=True)
 
     output['keywords'] = []
 
     for w in sorted_words:
         if w[1] > 1:
             output['keywords'].append({
-                'word': stem_to_word[w[0]]['word'].encode('utf-8'),
+                'word': stem_to_word[w[0]]['word'],
                 'count': w[1],
             })
             # "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
@@ -546,7 +545,7 @@ def main(site, sitemap):
     for w, v in sorted_two_ngrams:
         if v > 1:
             output['keywords'].append({
-                'word': w.encode('utf-8'),
+                'word': w,
                 'count': v,
             })
             # print "{0}\t{1}".format(w.encode('utf-8'), v)
@@ -554,12 +553,12 @@ def main(site, sitemap):
     for w, v in sorted_three_ngrams:
         if v > 1:
             output['keywords'].append({
-                'word': w.encode('utf-8'),
+                'word': w,
                 'count': v,
             })
             # print "{0}\t{1}".format(w.encode('utf-8'), v)
 
-    print json.dumps(output, indent=4, separators=(',', ': '))
+    print(json.dumps(output, indent=4, separators=(',', ': ')))
 
 
 if __name__ == "__main__":
@@ -573,7 +572,7 @@ if __name__ == "__main__":
         site = sys.argv[1]
         sitemap = site + sys.argv[2]
     else:
-        print "Usage: python analyze.py http://www.site.tld [sitemap]"
+        print("Usage: python analyze.py http://www.site.tld [sitemap]")
         exit()
 
     main(site, sitemap)
