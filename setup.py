@@ -23,6 +23,9 @@ setup(
     install_requires=[
         'BeautifulSoup4', 'nltk', 'numpy', 'requests',
     ],
+    cmdclass={
+        'install': PostInstallCommand,
+    },
     scripts=['seoanalyzer/seoanalyze'],
     classifiers = [
         "Programming Language :: Python",
