@@ -149,7 +149,7 @@ class Page(object):
         pages_crawled.append(self.url)
 
         if self.url.startswith('//'):
-            self.url = "http:{0}".format(self.url)
+            self.url = 'http:{0}'.format(self.url)
 
         try:
             page = requests.get(self.url)
@@ -198,14 +198,14 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('http://api.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url.decode('utf-8')))
+            page = requests.get('https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(self.url))
             fb_data = json.loads(page.text)
-            fb_share_count = fb_data[0]['share_count']
-            fb_comment_count = fb_data[0]['comment_count']
-            fb_like_count = fb_data[0]['like_count']
-            fb_click_count = fb_data[0]['click_count']
+            fb_share_count = fb_data['share']['share_count']
+            fb_comment_count = fb_data['share']['comment_count']
+            fb_like_count = fb_data['og_object']['likes']['summary']['total_count']
+            #fb_reaction_count = fb_data['engagement']['reaction_count']
         except:
-            pass
+           pass
 
         self.social['facebook'] = {
             'shares': fb_share_count,
@@ -214,23 +214,10 @@ class Page(object):
             'clicks': fb_click_count,
         }
 
-        twitter_count = 0
-
-        try:
-            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url={0}&callback=twttr.receiveCount'.format(self.url.decode('utf-8')))
-            page_text = page.text
-            twitter_count = loads(page_text[page_text.index('{'):-2])['count']
-        except:
-            pass
-
-        self.social['twitter'] = {
-            'count': twitter_count,
-        }
-
         su_views = 0
 
         try:
-            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url.decode('utf-8')))
+            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
             su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
@@ -441,7 +428,7 @@ class Page(object):
         anchors = bs.find_all('a', href=True)
 
         for tag in anchors:
-            tag_href = tag['href'].encode('utf-8')
+            tag_href = tag['href']
             tag_text = tag.text.lower().strip()
 
             if len(tag.get('title', '')) == 0:
@@ -450,7 +437,7 @@ class Page(object):
             if tag_text in ['click here', 'page', 'article']:
                 self.warn('Anchor text contains generic text: {0}'.format(tag_text))
 
-            if bytes(self.site, encoding='utf-8') not in tag_href and b':' in tag_href:
+            if self.site not in tag_href and ':' in tag_href:
                 continue
 
             modified_url = self.rel_to_abs_url(tag_href)
@@ -461,10 +448,10 @@ class Page(object):
             pages_to_crawl.append(modified_url)
 
     def rel_to_abs_url(self, link):
-        if b':' in link:
+        if ':' in link:
             return link
 
-        relative_path = link.decode('utf-8')
+        relative_path = link
         domain = self.site
 
         if domain[-1] == '/':
@@ -496,6 +483,11 @@ def getText(nodelist):
     return ''.join(rc)
 
 
+def do_ignore(url_to_check):
+    # todo: add blacklist of url types
+    return False
+
+
 def analyze(site, sitemap=None):
     if sitemap is not None:
         page = requests.get(sitemap)
@@ -515,14 +507,19 @@ def analyze(site, sitemap=None):
         if page.strip().lower() in crawled:
             continue
 
-        if b'#' in page:
+        if '#' in page:
             if page[:page.index('#')].strip().lower() in crawled:
                 continue
+
+        if do_ignore(page) == True:
+            continue
 
         crawled.append(page.strip().lower())
         pg = Page(page, site)
         pg.analyze()
         output['pages'].append(pg.talk('normal'))
+
+        print('...done')
 
     sorted_words = sorted(wordcount.items(), key=itemgetter(1), reverse=True)
     sorted_two_ngrams = sorted(two_ngram.items(), key=itemgetter(1), reverse=True)
