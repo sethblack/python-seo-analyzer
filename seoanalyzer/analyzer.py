@@ -515,7 +515,7 @@ def analyze(site, sitemap=None):
         if page.strip().lower() in crawled:
             continue
 
-        if '#' in page:
+        if b'#' in page:
             if page[:page.index('#')].strip().lower() in crawled:
                 continue
 

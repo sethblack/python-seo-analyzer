@@ -14,28 +14,19 @@ Installation
 pip3 install pyseoanalyzer
 ```
 
-### Python Shell
-
-You _must_ do this in order for the stemmer to work.
-
-```
->> import nltk
->> nltk.download()
-```
-
 Command-line Usage
 ------------------
 
 If you run without a sitemap it will start crawling at the homepage
 
 ```
-$> seoanalyze http://www.domain.com/
+#> seoanalyze http://www.domain.com/
 ```
 
 Or you can specify the path to a sitmap to seed the urls to scan list.
 
 ```
-$> seoanalyze http://www.domain.com/ path/to/sitemap.xml
+#> seoanalyze http://www.domain.com/ path/to/sitemap.xml
 ```
 
 API

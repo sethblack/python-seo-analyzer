@@ -2,6 +2,15 @@
 
 from distutils.core import setup
 
+class PostInstallCommand(install):
+    """Post-installation for installation mode."""
+    def run(self):
+        import nltk
+        nltk.download('punkt')
+        nltk.download('porter_test')
+        nltk.download('averaged_perceptron_tagger')
+        install.run(self)
+
 setup(
     name = 'pyseoanalyzer',
     version = '3.0',
