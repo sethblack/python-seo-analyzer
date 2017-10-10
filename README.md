@@ -1,9 +1,9 @@
 Python SEO Analyzer
 ===========
 
-A small SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.
+An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.
 
-Requires Python 2.7+, BeautifulSoup4, minidom, nltk, numpy and urllib2.
+Requires Python 3.4+, BeautifulSoup4, minidom, nltk, numpy and urllib2.
 
 Installation
 ------------
@@ -11,27 +11,33 @@ Installation
 ### PIP
 
 ```
-pip install -r requirements.txt
+pip3 install pyseoanalyzer
 ```
 
-### Python Shell
-
-```
->> import nltk
->> nltk.download()
-```
-
-Usage
------
+Command-line Usage
+------------------
 
 If you run without a sitemap it will start crawling at the homepage
 
 ```
-./analyze.py http://www.domain.com/
+#> seoanalyze http://www.domain.com/
 ```
 
 Or you can specify the path to a sitmap to seed the urls to scan list.
 
 ```
-./analyze.py http://www.domain.com/ path/to/sitemap.xml
+#> seoanalyze http://www.domain.com/ path/to/sitemap.xml
+```
+
+API
+---
+
+The `analyze` function returns a dictionairy with the results of the crawl.
+
+```python
+from seoanalyzer import analyze
+
+output = analyze(site, sitemap)
+
+print(output)
 ```

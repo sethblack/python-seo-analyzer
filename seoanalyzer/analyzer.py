@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from bs4 import BeautifulSoup
 from collections import Counter
-from nltk import stem
 from operator import itemgetter
-from string import maketrans, punctuation
+from string import punctuation
+from urllib.parse import urlsplit
 from xml.dom import minidom
 
 import json
@@ -12,8 +12,9 @@ import nltk
 import numpy
 import re
 import requests
+import socket
 import sys
-
+import time
 
 wordcount = {}
 two_ngram = Counter()
@@ -21,7 +22,7 @@ three_ngram = Counter()
 pages_crawled = []
 pages_to_crawl = []
 stem_to_word = {}
-stemmer = stem.porter.PorterStemmer()
+stemmer = nltk.stem.porter.PorterStemmer()
 page_titles = []
 page_descriptions = []
 
@@ -91,7 +92,7 @@ class Page(object):
         self.keywords = u''
         self.warnings = []
         self.social = {}
-        self.translation = maketrans(punctuation, str(u' ' * len(punctuation)).encode('utf-8'))
+        self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
         super(Page, self).__init__()
 
     def talk(self, output='all'):
@@ -151,7 +152,7 @@ class Page(object):
         pages_crawled.append(self.url)
 
         if self.url.startswith('//'):
-            self.url = "http:{0}".format(self.url)
+            self.url = 'http:{0}'.format(self.url)
 
         try:
             page = requests.get(self.url)
@@ -170,13 +171,13 @@ class Page(object):
                 self.warn(u'Can not read {0}'.format(encoding))
                 return
         else:
-            raw_html = page.text
+            raw_html = u'{}'.format(page.text)
 
         # remove comments, they screw with BeautifulSoup
-        clean_html = re.sub(r'<!--.*?-->', r'', raw_html.encode('utf-8'), flags=re.DOTALL)
+        clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)
 
-        soup_lower = BeautifulSoup(clean_html.lower(), "html.parser")
-        soup_unmodified = BeautifulSoup(clean_html, "html.parser")
+        soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser')
+        soup_unmodified = BeautifulSoup(clean_html, 'html.parser')
 
         texts = soup_lower.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
@@ -200,14 +201,14 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('http://api.facebook.com/restserver.php?v=1.0&method=links.getStats&urls={0}&format=json'.format(self.url))
+            page = requests.get('https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(self.url))
             fb_data = json.loads(page.text)
-            fb_share_count = fb_data[0]['share_count']
-            fb_comment_count = fb_data[0]['comment_count']
-            fb_like_count = fb_data[0]['like_count']
-            fb_click_count = fb_data[0]['click_count']
+            fb_share_count = fb_data['share']['share_count']
+            fb_comment_count = fb_data['share']['comment_count']
+            fb_like_count = fb_data['og_object']['likes']['summary']['total_count']
+            #fb_reaction_count = fb_data['engagement']['reaction_count']
         except:
-            pass
+           pass
 
         self.social['facebook'] = {
             'shares': fb_share_count,
@@ -215,21 +216,6 @@ class Page(object):
             'likes': fb_like_count,
             'clicks': fb_click_count,
         }
-        # print 'facebook\t{0}\t{1}\t{2}\t{3}\t{4}'.format(self.url, fb_share_count, fb_comment_count, fb_like_count, fb_click_count)
-
-        twitter_count = 0
-
-        try:
-            page = requests.get('http://urls.api.twitter.com/1/urls/count.json?url={0}&callback=twttr.receiveCount'.format(self.url))
-            page_text = page.text
-            twitter_count = loads(page_text[page_text.index('{'):-2])['count']
-        except:
-            pass
-
-        self.social['twitter'] = {
-            'count': twitter_count,
-        }
-        # print 'twitter\t{0}\t{1}'.format(self.url, twitter_count)
 
         su_views = 0
 
@@ -241,7 +227,6 @@ class Page(object):
         except:
             pass
 
-        # print 'stumbleupon\t{0}\t{1}'.format(self.url, su_views)
         self.social['stumbleupon'] = {
             'stumbles': su_views,
         }
@@ -264,7 +249,7 @@ class Page(object):
 
         tags0 = numpy.asarray(nltk.pos_tag(nltk.word_tokenize(sentence)))
         try:
-            tags = tags0[numpy.where(-numpy.in1d(tags0[:, 1], ['RB', 'RBR', 'RBS', 'TO', ]))]  # remove adverbs, 'TO'
+            tags = tags0[numpy.where(~numpy.in1d(tags0[:, 1], ['RB', 'RBR', 'RBS', 'TO', ]))]  # remove adverbs, 'TO'
         except IndexError:
             self.warn("tags0 is wrong: {0}".format(tags0))
             return None
@@ -299,10 +284,10 @@ class Page(object):
         page_text = ''
 
         for element in vt:
-            page_text += element.encode('utf-8').lower() + ' '
+            page_text += element.lower() + u' '
 
-        tokens = self.tokenize(page_text.decode('utf-8'))
-        raw_tokens = self.raw_tokenize(page_text.decode('utf-8'))
+        tokens = self.tokenize(page_text)
+        raw_tokens = self.raw_tokenize(page_text)
 
         two_ngrams = self.getngrams(raw_tokens, 2)
 
@@ -319,7 +304,7 @@ class Page(object):
         freq_dist = nltk.FreqDist(tokens)
 
         for word in freq_dist:
-            root = stemmer.stem_word(word)
+            root = stemmer.stem(word)
 
             if root in stem_to_word and freq_dist[word] > stem_to_word[root]['count']:
                 stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
@@ -331,7 +316,7 @@ class Page(object):
             else:
                 wordcount[root] = freq_dist[word]
 
-        sentences = sentence_tokenizer.tokenize(page_text.decode('utf-8'))
+        sentences = sentence_tokenizer.tokenize(page_text)
 
         for s in sentences:
             if self.is_passive_voice(s) is True:
@@ -402,7 +387,7 @@ class Page(object):
         length = len(k)
 
         if length > 0:
-            self.warn('Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(k))
+            self.warn(u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(k))
 
     def visible_tags(self, element):
         if element.parent.name in ['style', 'script', '[document]']:
@@ -446,7 +431,7 @@ class Page(object):
         anchors = bs.find_all('a', href=True)
 
         for tag in anchors:
-            tag_href = tag['href'].encode('utf-8')
+            tag_href = tag['href']
             tag_text = tag.text.lower().strip()
 
             if len(tag.get('title', '')) == 0:
@@ -501,7 +486,34 @@ def getText(nodelist):
     return ''.join(rc)
 
 
-def main(site, sitemap):
+def do_ignore(url_to_check):
+    # todo: add blacklist of url types
+    return False
+
+def check_dns(url_to_check):
+    try:
+        o = urlsplit(url_to_check)
+        socket.gethostbyname(o.hostname)
+        return True
+    except:
+        pass
+
+    return False
+
+def analyze(site, sitemap=None):
+    start_time = time.time()
+
+    def calc_total_time():
+        return time.time() - start_time
+
+    crawled = []
+    output = {'pages': [], 'keywords': [], 'errors': [], 'total_time': calc_total_time()}
+
+    if check_dns(site) == False:
+        output['errors'].append('DNS Lookup Failed')
+        output['total_time'] = calc_total_time()
+        return output
+
     if sitemap is not None:
         page = requests.get(sitemap)
         xml_raw = page.text
@@ -513,9 +525,6 @@ def main(site, sitemap):
 
     pages_to_crawl.append(site)
 
-    crawled = []
-    output = {'pages': [], 'keywords': []}
-
     for page in pages_to_crawl:
         if page.strip().lower() in crawled:
             continue
@@ -524,42 +533,44 @@ def main(site, sitemap):
             if page[:page.index('#')].strip().lower() in crawled:
                 continue
 
+        if do_ignore(page) == True:
+            continue
+
         crawled.append(page.strip().lower())
         pg = Page(page, site)
         pg.analyze()
         output['pages'].append(pg.talk('normal'))
 
-    sorted_words = sorted(wordcount.iteritems(), key=itemgetter(1), reverse=True)
-    sorted_two_ngrams = sorted(two_ngram.iteritems(), key=itemgetter(1), reverse=True)
-    sorted_three_ngrams = sorted(three_ngram.iteritems(), key=itemgetter(1), reverse=True)
+    sorted_words = sorted(wordcount.items(), key=itemgetter(1), reverse=True)
+    sorted_two_ngrams = sorted(two_ngram.items(), key=itemgetter(1), reverse=True)
+    sorted_three_ngrams = sorted(three_ngram.items(), key=itemgetter(1), reverse=True)
 
     output['keywords'] = []
 
     for w in sorted_words:
         if w[1] > 1:
             output['keywords'].append({
-                'word': stem_to_word[w[0]]['word'].encode('utf-8'),
+                'word': stem_to_word[w[0]]['word'],
                 'count': w[1],
             })
-            # "{0}\t{1}".format(stem_to_word[w[0]]['word'].encode('utf-8'), w[1])
 
     for w, v in sorted_two_ngrams:
         if v > 1:
             output['keywords'].append({
-                'word': w.encode('utf-8'),
+                'word': w,
                 'count': v,
             })
-            # print "{0}\t{1}".format(w.encode('utf-8'), v)
 
     for w, v in sorted_three_ngrams:
         if v > 1:
             output['keywords'].append({
-                'word': w.encode('utf-8'),
+                'word': w,
                 'count': v,
             })
-            # print "{0}\t{1}".format(w.encode('utf-8'), v)
 
-    print json.dumps(output, indent=4, separators=(',', ': '))
+    output['total_time'] = calc_total_time()
+
+    return output
 
 
 if __name__ == "__main__":
@@ -573,7 +584,9 @@ if __name__ == "__main__":
         site = sys.argv[1]
         sitemap = site + sys.argv[2]
     else:
-        print "Usage: python analyze.py http://www.site.tld [sitemap]"
+        print("Usage: python analyze.py http://www.site.tld [sitemap]")
         exit()
 
-    main(site, sitemap)
+    output = analyze(site, sitemap)
+
+    print(json.dumps(output, indent=4, separators=(',', ': ')))
