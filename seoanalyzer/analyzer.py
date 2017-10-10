@@ -14,6 +14,7 @@ import re
 import requests
 import socket
 import sys
+import time
 
 wordcount = {}
 two_ngram = Counter()
@@ -500,11 +501,17 @@ def check_dns(url_to_check):
     return False
 
 def analyze(site, sitemap=None):
+    start_time = time.time()
+
+    def calc_total_time():
+        return time.time() - start_time
+
     crawled = []
-    output = {'pages': [], 'keywords': [], 'errors': []}
+    output = {'pages': [], 'keywords': [], 'errors': [], 'total_time': calc_total_time()}
 
     if check_dns(site) == False:
         output['errors'].append('DNS Lookup Failed')
+        output['total_time'] = calc_total_time()
         return output
 
     if sitemap is not None:
@@ -560,6 +567,8 @@ def analyze(site, sitemap=None):
                 'word': w,
                 'count': v,
             })
+
+    output['total_time'] = calc_total_time()
 
     return output
 
