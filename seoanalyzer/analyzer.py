@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 from operator import itemgetter
 from string import punctuation
+from urllib.parse import urlsplit
 from xml.dom import minidom
 
 import json
@@ -11,6 +12,7 @@ import nltk
 import numpy
 import re
 import requests
+import socket
 import sys
 
 wordcount = {}
@@ -487,8 +489,24 @@ def do_ignore(url_to_check):
     # todo: add blacklist of url types
     return False
 
+def check_dns(url_to_check):
+    try:
+        o = urlsplit(url_to_check)
+        socket.gethostbyname(o.hostname)
+        return True
+    except:
+        pass
+
+    return False
 
 def analyze(site, sitemap=None):
+    crawled = []
+    output = {'pages': [], 'keywords': [], 'errors': []}
+
+    if check_dns(site) == False:
+        output['errors'].append('DNS Lookup Failed')
+        return output
+
     if sitemap is not None:
         page = requests.get(sitemap)
         xml_raw = page.text
@@ -499,9 +517,6 @@ def analyze(site, sitemap=None):
             pages_to_crawl.append(getText(url.childNodes))
 
     pages_to_crawl.append(site)
-
-    crawled = []
-    output = {'pages': [], 'keywords': []}
 
     for page in pages_to_crawl:
         if page.strip().lower() in crawled:
