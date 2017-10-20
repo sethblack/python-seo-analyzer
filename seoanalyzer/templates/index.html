@@ -1,78 +1,122 @@
 <!doctype html>
 <html>
 <head>
+	<meta charset="utf-8">
+  	<meta name="viewport" content="width=device-width, initial-scale=1">
+  	<title>seo analysis</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="https://npmcdn.com/tether@1.2.4/dist/js/tether.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
 	<style>
-	table,tr,th,td{
-		border-collapse: collapse;
-		border: 1px solid black;
-	}
+		th {
+			cursor: pointer;
+		}
 	</style>
 </head>
 <body>
-	<h1>Python SEO Analyzer Results</h1>
+	<div class="container">
+		<div class="page-header">
+			<h1>python-seo-analyzer results</h1>
+		</div>
 
-	{%if result['fatal_error']%}
-		<p>There was a fatal error when trying to format the output file as a webpage. Confirm that there is an output.json file in the directory. If not, you can reference the 
-			<a href="https://github.com/sethblack/python-seo-analyzer">python-seo-analyzer documentation</a></p>
-	{% else %}
-	<p>total time: {{result['total_time']|round(2)}} seconds </p>
+			{%if result['fatal_error']%}
+			<p>There was a fatal error when trying to format the output file as a webpage. Confirm that there is an output.json file in the directory. If not, you can reference the 
+				<a href="https://github.com/sethblack/python-seo-analyzer">python-seo-analyzer documentation</a></p>
+			{% else %}
+				<p>total time: {{result['total_time']|round(2)}} seconds </p>
+				<div>
+				<h2>go to:</h2>
+				<ul>
+				<li><a href="#page-section">page analysis</a></li>
+				<li><a href="#keyword-section">keyword analysis</a></li>
+				<li><a href="https://github.com/sethblack/python-seo-analyzer">GitHub</a></li>
+				</ul>
+				</div>
 
-	{% if result['errors']%}
-	<h2>errors:</h2>
-	<ul>
-		{% for e in result['errors'] %}
-		<li>{{e}}</li>
-		{% endfor %}
-	</ul>
-	{% endif %}
+				{% if result['errors']%}
+				<h2>errors:</h2>
+				<ul>
+					{% for e in result['errors'] %}
+					<li>{{e}}</li>
+					{% endfor %}
+				</ul>
+				{% endif %}
 
-	{% if result['pages'] %}
-	<h2>pages:</h2>
-	<table id="pages">
-		<tr>
-			<th>page</th>
-			<th>facebook shares</th>
-			<th>facebook clicks</th>
-			<th>facebook likes</th>
-			<th>facebook comments</th>
-			<th>stumbleupon stumbles</th>
-			<th>number notices</th>
-			<th>notices</th>
-		</tr>
-		{% for page in result['pages']%}
-		{% for key in page.keys() %}
-		<tr>
-			<td><a href="{{ key }}">{{key}}</a> </td>
-			<td>{{page[key][0]['facebook']['shares']}}</td>
-			<td>{{page[key][0]['facebook']['clicks']}}</td>
-			<td>{{page[key][0]['facebook']['likes']}}</td>
-			<td>{{page[key][0]['facebook']['comments']}}</td>
-			<td>{{page[key][0]['stumbleupon']['stumbles']}}</td>
-			<td>{{page[key][1]|length}}</td>
-			<td><ul>{% for e in page[key][1] %}<li>{{e}}</li>{% endfor %}</ul></td>
-		</tr>
-		{% endfor %}
-		{% endfor %}
-	</table>
-	{% endif %}
+				{% if result['pages'] %}
+				<h2 id="page-section">page analysis:</h2>
 
-	{% if result['keywords'] %}
-	<h2>keywords:</h2>
-	<table id = "keywords">
-		<tr>
-			<th>keywords</th>
-			<th>count</th>
-		</tr>
-		{% for key in result['keywords']%}
-		<tr>
-			<td> {{ key['word'] }} </td>
-			<td> {{ key['count'] }} </td>
-		</tr>
+				<input type="button" value="show/hide notices" onclick="toggleDetail()" class="btn btn-info">
+				<table id="pages" class="table table-striped">
+					<thead>
+						<tr>
+							<th>page</th>
+							<th>facebook shares</th>
+							<th>facebook clicks</th>
+							<th>facebook likes</th>
+							<th>facebook comments</th>
+							<th>stumbleupon stumbles</th>
+							<th>number of notices</th>
+							<th class="error-detail">notices</th>
+						</tr>
+					</thead>
+					{% for page in result['pages']%}
+					{% for key in page.keys() %}
+					<tr>
+						<td><a href="{{ key }}">{{key}}</a> </td>
+						<td>{{page[key][0]['facebook']['shares']}}</td>
+						<td>{{page[key][0]['facebook']['clicks']}}</td>
+						<td>{{page[key][0]['facebook']['likes']}}</td>
+						<td>{{page[key][0]['facebook']['comments']}}</td>
+						<td>{{page[key][0]['stumbleupon']['stumbles']}}</td>
+						<td>{{page[key][1]|length}}</td>
+						<td class="error-detail"><ul>{% for e in page[key][1] %}<li>{{e}}</li>{% endfor %}</ul></td>
+					</tr>
+					{% endfor %}
+					{% endfor %}
+				</table>
+				{% endif %}
 
-		{% endfor %}
-	</table>
-	{% endif %}
-	{% endif %}
+				{% if result['keywords'] %}
+				<h2 id="keyword-section">keyword analysis:</h2>
+				<table id = "keywords" class="table table-striped">
+					<thead>
+						<tr>
+							<th>keywords</th>
+							<th>count</th>
+						</tr>
+					</thead>
+					{% for key in result['keywords']%}
+					<tr>
+						<td> {{ key['word'] }} </td>
+						<td> {{ key['count'] }} </td>
+					</tr>
 
-</body>
-</html>
+					{% endfor %}
+				</table>
+				{% endif %}
+				{% endif %}
+			</div>
+
+		<script type='text/javascript'>
+		function toggleDetail(){$(".error-detail").toggle();}
+		// https://stackoverflow.com/questions/3160277/jquery-table-sort
+		$(document).ready(function(){
+		$('th').click(function(){
+			var table = $(this).parents('table').eq(0)
+			var rows = table.find('tr:gt(0)').toArray().sort(comparer($(this).index()))
+			this.asc = !this.asc
+			if (!this.asc){rows = rows.reverse()}
+				for (var i = 0; i < rows.length; i++){table.append(rows[i])}
+			})
+		function comparer(index) {
+			return function(a, b) {
+				var valA = getCellValue(a, index), valB = getCellValue(b, index)
+				return $.isNumeric(valA) && $.isNumeric(valB) ? valA - valB : valA.localeCompare(valB)
+			}
+		}
+		function getCellValue(row, index){ return $(row).children('td').eq(index).text() }
+		});
+		</script>
+		</body>
+		</html>

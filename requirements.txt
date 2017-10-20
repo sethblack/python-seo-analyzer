@@ -2,4 +2,4 @@ BeautifulSoup4
 nltk
 numpy
 requests
-flask
+jinja2

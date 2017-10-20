@@ -29,11 +29,10 @@ Or you can specify the path to a sitmap to seed the urls to scan list.
 #> seoanalyze http://www.domain.com/ path/to/sitemap.xml
 ```
 
-A basic webpage can be generated from the analysis. After running the following, navigate to the indicated webpage in a modern browser:
+HTML output can be generated from the analysis instead of json.
 
 ```
-#> python3 analyze.py http://www.domain.com/
-#> python3 generate_html.py
+#> seoanalyze http://www.domain.com/ path/to/sitemap.xml html
 ```
 
 API

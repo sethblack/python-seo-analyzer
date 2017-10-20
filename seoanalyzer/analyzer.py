@@ -16,6 +16,8 @@ import socket
 import sys
 import time
 
+from jinja2 import Environment, FileSystemLoader
+
 wordcount = {}
 two_ngram = Counter()
 three_ngram = Counter()
@@ -576,7 +578,7 @@ def analyze(site, sitemap=None):
 if __name__ == "__main__":
     site = ''
     sitemap = ''
-    jsonfile = 'output.json'
+    output_type = ''
 
     if len(sys.argv) == 2:
         site = sys.argv[1]
@@ -584,13 +586,23 @@ if __name__ == "__main__":
     elif len(sys.argv) == 3:
         site = sys.argv[1]
         sitemap = site + sys.argv[2]
+    elif len(sys.argv) == 4:
+        site = sys.argv[1]
+        sitemap = site + sys.argv[2]
+        output_type = sys.argv[3]
     else:
-        print("Usage: python analyze.py http://www.site.tld [sitemap]")
+        print("Usage: python analyze.py http://www.site.tld [sitemap] [html|json]")
         exit()
 
     output = analyze(site, sitemap)
 
-    print(json.dumps(output, indent=4, separators=(',', ': ')))
+    if output_type == 'html':
+        #template rendering
+        #https://stackoverflow.com/questions/11857530/how-do-i-render-jinja2-output-to-a-file-in-python-instead-of-a-browser
+        env = Environment(loader=FileSystemLoader('templates'))
+        template = env.get_template('index.html')
+        output_from_parsed_template = template.render(result=output)
+        print(output_from_parsed_template)
+    else:
+        print(json.dumps(output, indent=4, separators=(',', ': ')))
 
-    with open(jsonfile,'w') as fo:
-        json.dump(output,fo)

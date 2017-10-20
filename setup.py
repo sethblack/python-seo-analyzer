@@ -23,7 +23,7 @@ setup(
     packages = ['seoanalyzer'],
     keywords = ['search engine optimization', 'seo', 'website parser', 'crawler', 'scraper',],
     install_requires=[
-        'BeautifulSoup4', 'nltk', 'numpy', 'requests','flask',
+        'BeautifulSoup4', 'nltk', 'numpy', 'requests','jinja2',
     ],
     cmdclass ={ 
         'install': PostInstallCommand,
