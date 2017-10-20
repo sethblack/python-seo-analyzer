@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+	<style>
+	table,tr,th,td{
+		border-collapse: collapse;
+		border: 1px solid black;
+	}
+	</style>
+</head>
+<body>
+	<h1>Python SEO Analyzer Results</h1>
+
+	{%if result['fatal_error']%}
+		<p>There was a fatal error when trying to format the output file as a webpage. Confirm that there is an output.json file in the directory. If not, you can reference the 
+			<a href="https://github.com/sethblack/python-seo-analyzer">python-seo-analyzer documentation</a></p>
+	{% else %}
+	<p>total time: {{result['total_time']|round(2)}} seconds </p>
+
+	{% if result['errors']%}
+	<h2>errors:</h2>
+	<ul>
+		{% for e in result['errors'] %}
+		<li>{{e}}</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+	{% if result['pages'] %}
+	<h2>pages:</h2>
+	<table id="pages">
+		<tr>
+			<th>page</th>
+			<th>facebook shares</th>
+			<th>facebook clicks</th>
+			<th>facebook likes</th>
+			<th>facebook comments</th>
+			<th>stumbleupon stumbles</th>
+			<th>number notices</th>
+			<th>notices</th>
+		</tr>
+		{% for page in result['pages']%}
+		{% for key in page.keys() %}
+		<tr>
+			<td><a href="{{ key }}">{{key}}</a> </td>
+			<td>{{page[key][0]['facebook']['shares']}}</td>
+			<td>{{page[key][0]['facebook']['clicks']}}</td>
+			<td>{{page[key][0]['facebook']['likes']}}</td>
+			<td>{{page[key][0]['facebook']['comments']}}</td>
+			<td>{{page[key][0]['stumbleupon']['stumbles']}}</td>
+			<td>{{page[key][1]|length}}</td>
+			<td><ul>{% for e in page[key][1] %}<li>{{e}}</li>{% endfor %}</ul></td>
+		</tr>
+		{% endfor %}
+		{% endfor %}
+	</table>
+	{% endif %}
+
+	{% if result['keywords'] %}
+	<h2>keywords:</h2>
+	<table id = "keywords">
+		<tr>
+			<th>keywords</th>
+			<th>count</th>
+		</tr>
+		{% for key in result['keywords']%}
+		<tr>
+			<td> {{ key['word'] }} </td>
+			<td> {{ key['count'] }} </td>
+		</tr>
+
+		{% endfor %}
+	</table>
+	{% endif %}
+	{% endif %}
+
+</body>
+</html>

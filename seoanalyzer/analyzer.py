@@ -576,6 +576,7 @@ def analyze(site, sitemap=None):
 if __name__ == "__main__":
     site = ''
     sitemap = ''
+    jsonfile = 'output.json'
 
     if len(sys.argv) == 2:
         site = sys.argv[1]
@@ -590,3 +591,6 @@ if __name__ == "__main__":
     output = analyze(site, sitemap)
 
     print(json.dumps(output, indent=4, separators=(',', ': ')))
+
+    with open(jsonfile,'w') as fo:
+        json.dump(output,fo)
