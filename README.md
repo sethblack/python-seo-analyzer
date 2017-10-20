@@ -33,7 +33,7 @@ A basic webpage can be generated from the analysis. After running the following,
 
 ```
 #> python3 analyze.py http://www.domain.com/
-#> python3 output.py
+#> python3 generate_html.py
 ```
 
 API
