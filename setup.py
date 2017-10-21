@@ -15,13 +15,15 @@ class PostInstallCommand(_install):
 
 setup(
     name = 'pyseoanalyzer',
-    version = '3.0.3',
+    version = '3.0.4',
     description = 'An SEO tool that gives you general Search Engine Optimization directions.',
     author = 'Seth Black',
     author_email = 'sblack@sethserver.com',
     url = 'https://github.com/sethblack/python-seo-analyzer',
     packages = ['seoanalyzer'],
     keywords = ['search engine optimization', 'seo', 'website parser', 'crawler', 'scraper',],
+    package_data={'seoanalyzer': ['templates/index.html']},
+    include_package_data=True,
     install_requires=[
         'BeautifulSoup4', 'nltk', 'numpy', 'requests','jinja2',
     ],
