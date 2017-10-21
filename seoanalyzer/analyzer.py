@@ -14,11 +14,7 @@ import numpy
 import re
 import requests
 import socket
-import sys
 import time
-
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
 
 wordcount = {}
 two_ngram = Counter()
@@ -589,6 +585,9 @@ if __name__ == "__main__":
     output = analyze(args.site, args.sitemap)
 
     if args.output_format == 'html':
+        from jinja2 import Environment
+        from jinja2 import FileSystemLoader
+
         env = Environment(loader=FileSystemLoader('templates'))
         template = env.get_template('index.html')
         output_from_parsed_template = template.render(result=output)
