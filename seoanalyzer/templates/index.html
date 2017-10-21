@@ -70,7 +70,7 @@
 						<td>{{page[key][0]['facebook']['comments']}}</td>
 						<td>{{page[key][0]['stumbleupon']['stumbles']}}</td>
 						<td>{{page[key][1]|length}}</td>
-						<td class="error-detail"><ul>{% for e in page[key][1] %}<li>{{e}}</li>{% endfor %}</ul></td>
+						<td class="error-detail"><ul>{% for err in page[key][1] %}<li>{{err|e}}</li>{% endfor %}</ul></td>
 					</tr>
 					{% endfor %}
 					{% endfor %}
