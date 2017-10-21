@@ -26,13 +26,13 @@ If you run without a sitemap it will start crawling at the homepage
 Or you can specify the path to a sitmap to seed the urls to scan list.
 
 ```
-#> seoanalyze http://www.domain.com/ path/to/sitemap.xml
+#> seoanalyze http://www.domain.com/ --sitemap path/to/sitemap.xml
 ```
 
 HTML output can be generated from the analysis instead of json.
 
 ```
-#> seoanalyze http://www.domain.com/ path/to/sitemap.xml html
+#> seoanalyze http://www.domain.com/ --output-format html
 ```
 
 API
