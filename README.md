@@ -1,7 +1,7 @@
 Python SEO Analyzer
 ===========
 
-An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.
+An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any general SEO related issues.
 
 Requires Python 3.4+, BeautifulSoup4, flask, minidom, nltk, numpy and urllib2.
 
@@ -17,7 +17,7 @@ pip3 install pyseoanalyzer
 Command-line Usage
 ------------------
 
-If you run without a sitemap it will start crawling at the homepage
+If you run without a sitemap it will start crawling at the homepage.
 
 ```
 #> seoanalyze http://www.domain.com/
@@ -38,7 +38,7 @@ HTML output can be generated from the analysis instead of json.
 API
 ---
 
-The `analyze` function returns a dictionairy with the results of the crawl.
+The `analyze` function returns a dictionary with the results of the crawl.
 
 ```python
 from seoanalyzer import analyze
