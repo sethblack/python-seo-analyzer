@@ -39,3 +39,7 @@ output/
 build/
 
 .DS_Store
+
+
+# PyCharm
+.idea/*
