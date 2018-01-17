@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools.setup import setup
+from setuptools import setup
 from distutils.command.install import install as _install
 
 class PostInstallCommand(_install):
