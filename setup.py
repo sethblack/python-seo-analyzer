@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools.setup import setup
 from distutils.command.install import install as _install
 
 class PostInstallCommand(_install):
@@ -15,7 +15,7 @@ class PostInstallCommand(_install):
 
 setup(
     name = 'pyseoanalyzer',
-    version = '3.0.6',
+    version = '3.0.7',
     description = 'An SEO tool that gives you general Search Engine Optimization directions.',
     author = 'Seth Black',
     author_email = 'sblack@sethserver.com',
