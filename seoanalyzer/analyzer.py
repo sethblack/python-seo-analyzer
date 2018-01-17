@@ -15,6 +15,12 @@ import re
 import requests
 import socket
 import time
+##
+# python 3.6+ support.
+import sys
+if list(sys.version_info)[:2] >= [3, 6]:
+    unicode = str
+##
 
 wordcount = {}
 two_ngram = Counter()
@@ -81,10 +87,14 @@ class Page(object):
     Container for each page and the analyzer.
     """
 
-    def __init__(self, url='', site=''):
+    def __init__(self, url='', site='', headers=None):
         """
         Variables go here, *not* outside of __init__
         """
+        if not headers:
+            self.headers = requests.utils.default_headers()
+        else:
+            self.headers = headers
         self.site = site
         self.url = url
         self.title = u''
@@ -155,7 +165,7 @@ class Page(object):
             self.url = 'http:{0}'.format(self.url)
 
         try:
-            page = requests.get(self.url)
+            page = requests.get(self.url, headers=self.headers)
         except requests.exceptions.HTTPError as e:
             self.warn(u'Returned {0}'.format(page.status_code))
             return
@@ -201,7 +211,7 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(self.url))
+            page = requests.get('https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(self.url), headers=self.headers)
             fb_data = json.loads(page.text)
             fb_share_count = fb_data['share']['share_count']
             fb_comment_count = fb_data['share']['comment_count']
@@ -220,7 +230,7 @@ class Page(object):
         su_views = 0
 
         try:
-            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
+            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url), headers=self.headers)
             su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
@@ -500,7 +510,12 @@ def check_dns(url_to_check):
 
     return False
 
-def analyze(site, sitemap=None):
+def analyze(site, sitemap=None, headers=None):
+    if not headers:
+        _headers = requests.utils.default_headers()
+    else:
+        _headers = headers
+
     start_time = time.time()
 
     def calc_total_time():
@@ -515,7 +530,7 @@ def analyze(site, sitemap=None):
         return output
 
     if sitemap is not None:
-        page = requests.get(sitemap)
+        page = requests.get(sitemap, headers=_headers)
         xml_raw = page.text
         xmldoc = minidom.parseString(xml_raw)
         urls = xmldoc.getElementsByTagName('loc')
