@@ -22,16 +22,6 @@ if list(sys.version_info)[:2] >= [3, 6]:
     unicode = str
 ##
 
-wordcount = {}
-two_ngram = Counter()
-three_ngram = Counter()
-pages_crawled = []
-pages_to_crawl = []
-stem_to_word = {}
-stemmer = nltk.stem.porter.PorterStemmer()
-page_titles = []
-page_descriptions = []
-
 # This list of English stop words is taken from the "Glasgow Information
 # Retrieval Group". The original list can be found at
 # http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words
@@ -97,12 +87,23 @@ class Page(object):
             self.headers = headers
         self.site = site
         self.url = url
-        self.title = u''
-        self.description = u''
-        self.keywords = u''
+        self.title = ''
+        self.description = ''
+        self.keywords = ''
         self.warnings = []
         self.social = {}
         self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
+        self.wordcount = {}
+        self.js_tags = []
+        self.raw_meta_tags = []
+        self.bigram = Counter()
+        self.trigram = Counter()
+        self.pages_crawled = []
+        self.pages_to_crawl = []
+        self.stem_to_word = {}
+        self.stemmer = nltk.stem.porter.PorterStemmer()
+        self.page_titles = []
+        self.page_descriptions = []
         super(Page, self).__init__()
 
     def talk(self, output='all'):
@@ -113,13 +114,42 @@ class Page(object):
         return_val = {}
 
         if output == 'all':
-            return {
+            return_val = {
                 'url': self.url,
                 'title': self.title,
                 'description': self.description,
                 'keywords': self.keywords,
                 'warnings': self.warnings,
             }
+
+            sorted_words = sorted(self.wordcount.items(), key=itemgetter(1), reverse=True)
+            sorted_two_ngrams = sorted(self.bigram.items(), key=itemgetter(1), reverse=True)
+            sorted_three_ngrams = sorted(self.trigram.items(), key=itemgetter(1), reverse=True)
+
+            return_val['keywords'] = []
+
+            for w in sorted_words:
+                if w[1] > 1:
+                    return_val['keywords'].append({
+                        'word': self.stem_to_word[w[0]]['word'],
+                        'count': w[1],
+                    })
+
+            for w, v in sorted_two_ngrams:
+                if v > 1:
+                    return_val['keywords'].append({
+                        'word': w,
+                        'count': v,
+                    })
+
+            for w, v in sorted_three_ngrams:
+                if v > 1:
+                    return_val['keywords'].append({
+                        'word': w,
+                        'count': v,
+                    })
+
+            return return_val
         elif output == 'warnings':
             return {
                 'url': self.url,
@@ -156,10 +186,10 @@ class Page(object):
         if self.url.startswith('mailto:'):
             return
 
-        if self.url in pages_crawled:
+        if self.url in self.pages_crawled:
             return
 
-        pages_crawled.append(self.url)
+        self.pages_crawled.append(self.url)
 
         if self.url.startswith('//'):
             self.url = 'http:{0}'.format(self.url)
@@ -303,28 +333,28 @@ class Page(object):
 
         for ng in two_ngrams:
             vt = ' '.join(ng)
-            two_ngram[vt] += 1
+            self.bigram[vt] += 1
 
         three_ngrams = self.getngrams(raw_tokens, 3)
 
         for ng in three_ngrams:
             vt = ' '.join(ng)
-            three_ngram[vt] += 1
+            self.trigram[vt] += 1
 
         freq_dist = nltk.FreqDist(tokens)
 
         for word in freq_dist:
-            root = stemmer.stem(word)
+            root = self.stemmer.stem(word)
 
-            if root in stem_to_word and freq_dist[word] > stem_to_word[root]['count']:
-                stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+            if root in self.stem_to_word and freq_dist[word] > self.stem_to_word[root]['count']:
+                self.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
             else:
-                stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+                self.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
 
-            if root in wordcount:
-                wordcount[root] += freq_dist[word]
+            if root in self.wordcount:
+                self.wordcount[root] += freq_dist[word]
             else:
-                wordcount[root] = freq_dist[word]
+                self.wordcount[root] = freq_dist[word]
 
         sentences = sentence_tokenizer.tokenize(page_text)
 
@@ -352,11 +382,11 @@ class Page(object):
         elif length > 70:
             self.warn(u'Title tag is too long (more than 70 characters): {0}'.format(t))
 
-        if t in page_titles:
+        if t in self.page_titles:
             self.warn(u'Duplicate page title: {0}'.format(t))
             return
 
-        page_titles.append(t)
+        self.page_titles.append(t)
 
     def analyze_description(self):
         """
@@ -378,11 +408,11 @@ class Page(object):
         elif length > 255:
             self.warn(u'Description is too long (more than 255 characters): {0}'.format(d))
 
-        if d in page_descriptions:
+        if d in self.page_descriptions:
             self.warn(u'Duplicate description: {0}'.format(d))
             return
 
-        page_descriptions.append(d)
+        self.page_descriptions.append(d)
 
     def analyze_keywords(self):
         """
@@ -455,10 +485,10 @@ class Page(object):
 
             modified_url = self.rel_to_abs_url(tag_href)
 
-            if modified_url in pages_crawled:
+            if modified_url in self.pages_crawled:
                 continue
 
-            pages_to_crawl.append(modified_url)
+            self.pages_to_crawl.append(modified_url)
 
     def rel_to_abs_url(self, link):
         if ':' in link:
@@ -517,6 +547,7 @@ def analyze(site, sitemap=None, headers=None):
         _headers = headers
 
     start_time = time.time()
+    pages_to_crawl = []
 
     def calc_total_time():
         return time.time() - start_time
@@ -552,36 +583,14 @@ def analyze(site, sitemap=None, headers=None):
             continue
 
         crawled.append(page.strip().lower())
+
         pg = Page(page, site)
+
         pg.analyze()
+
         output['pages'].append(pg.talk('normal'))
 
-    sorted_words = sorted(wordcount.items(), key=itemgetter(1), reverse=True)
-    sorted_two_ngrams = sorted(two_ngram.items(), key=itemgetter(1), reverse=True)
-    sorted_three_ngrams = sorted(three_ngram.items(), key=itemgetter(1), reverse=True)
-
-    output['keywords'] = []
-
-    for w in sorted_words:
-        if w[1] > 1:
-            output['keywords'].append({
-                'word': stem_to_word[w[0]]['word'],
-                'count': w[1],
-            })
-
-    for w, v in sorted_two_ngrams:
-        if v > 1:
-            output['keywords'].append({
-                'word': w,
-                'count': v,
-            })
-
-    for w, v in sorted_three_ngrams:
-        if v > 1:
-            output['keywords'].append({
-                'word': w,
-                'count': v,
-            })
+        pages_to_crawl.extend(pg.pages_to_crawl)
 
     output['total_time'] = calc_total_time()
 
