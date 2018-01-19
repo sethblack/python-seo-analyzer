@@ -30,7 +30,12 @@ setup(
     cmdclass = { 
         'install': PostInstallCommand,
     },
-    scripts = ['seoanalyzer/seoanalyze'],
+    # no idea why this needed fixing, the diff says it didn't change...
+    entry_points = {
+        'console_scripts' : [
+            'seoanalyze = seoanalyzer.__main__:main'
+        ]
+    },
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
