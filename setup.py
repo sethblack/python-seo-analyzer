@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools import setup
 from distutils.command.install import install as _install
 
 class PostInstallCommand(_install):
@@ -15,7 +15,7 @@ class PostInstallCommand(_install):
 
 setup(
     name = 'pyseoanalyzer',
-    version = '3.0.5',
+    version = '3.0.7',
     description = 'An SEO tool that gives you general Search Engine Optimization directions.',
     author = 'Seth Black',
     author_email = 'sblack@sethserver.com',
@@ -23,11 +23,11 @@ setup(
     packages = ['seoanalyzer'],
     keywords = ['search engine optimization', 'seo', 'website parser', 'crawler', 'scraper',],
     package_data={'seoanalyzer': ['templates/index.html']},
-    include_package_data=True,
-    install_requires=[
+    include_package_data = True,
+    install_requires = [
         'BeautifulSoup4', 'nltk', 'numpy', 'requests','jinja2',
     ],
-    cmdclass ={ 
+    cmdclass = { 
         'install': PostInstallCommand,
     },
     scripts = ['seoanalyzer/seoanalyze'],
