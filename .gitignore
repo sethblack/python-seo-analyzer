@@ -40,6 +40,10 @@ build/
 
 .DS_Store
 
+# ipython
+*.ipynb
+.ipynb_checkpoints/*
+
 
 # PyCharm
 .idea/*

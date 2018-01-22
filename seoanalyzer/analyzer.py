@@ -6,6 +6,7 @@ from operator import itemgetter
 from string import punctuation
 from urllib.parse import urlsplit
 from xml.dom import minidom
+from itertools import islice
 
 import argparse
 import json
@@ -128,11 +129,12 @@ class Page(object):
 
             return_val['keywords'] = []
 
-            for w in sorted_words:
-                if w[1] > 1:
+            for w, v in sorted_words:
+
+                if v > 1:
                     return_val['keywords'].append({
-                        'word': self.stem_to_word[w[0]]['word'],
-                        'count': w[1],
+                        'word': self.stem_to_word[w]['word'],
+                        'count': v,
                     })
 
             for w, v in sorted_two_ngrams:
@@ -159,6 +161,37 @@ class Page(object):
             return {self.url: [self.social, self.warnings, ]}
         else:
             return {'error': "I don't know what {0} is.".format(output)}
+
+    def get_keywords(self):
+        sorted_words = sorted(self.wordcount.items(), key=itemgetter(1), reverse=True)
+        sorted_two_ngrams = sorted(self.bigram.items(), key=itemgetter(1), reverse=True)
+        sorted_three_ngrams = sorted(self.trigram.items(), key=itemgetter(1), reverse=True)
+
+        self.keywords = []
+
+        for w, v in sorted_words:
+
+            if v > 1:
+                self.keywords.append({
+                    'word': self.stem_to_word[w]['word'],
+                    'count': v,
+                })
+
+        for w, v in sorted_two_ngrams:
+            if v > 1:
+                self.keywords.append({
+                    'word': w,
+                    'count': v,
+                })
+
+        for w, v in sorted_three_ngrams:
+            if v > 1:
+                self.keywords.append({
+                    'word': w,
+                    'count': v,
+                })
+
+        return self.keywords
 
     def populate(self, bs):
         """
@@ -548,6 +581,8 @@ def analyze(site, sitemap=None, headers=None):
 
     start_time = time.time()
     pages_to_crawl = []
+    keyword_cnt = {}
+    keyword_aggregator = []
 
     def calc_total_time():
         return time.time() - start_time
@@ -589,10 +624,23 @@ def analyze(site, sitemap=None, headers=None):
         pg.analyze()
 
         output['pages'].append(pg.talk('normal'))
+        keyword_aggregator.append(pg.get_keywords()) # <-- um...ok! I got it to give keywords.
 
         pages_to_crawl.extend(pg.pages_to_crawl)
 
-    output['total_time'] = calc_total_time()
+    # um...this works but like...look at it...rat's nest lol.
+    for keywords_by_page in keyword_aggregator:
+        for dict_entry in keywords_by_page:
+            if dict_entry['word'] not in keyword_cnt.keys():
+                keyword_cnt[dict_entry['word']] = dict_entry['count']
+            keyword_cnt[dict_entry['word']] += dict_entry['count']
+    for word, count in sorted(list(keyword_cnt.items()), key=itemgetter(1), reverse=True):
+        output['keywords'].append({
+            'word': word,
+            'count': count,
+        })
+
+    output['total_time'] = calc_total_time() # <-- here we're assigning total_time
 
     return output
 
