@@ -6,7 +6,6 @@ from operator import itemgetter
 from string import punctuation
 from urllib.parse import urlsplit
 from xml.dom import minidom
-from itertools import islice
 
 import argparse
 import json
@@ -19,9 +18,11 @@ import time
 ##
 # python 3.6+ support.
 import sys
+
 if list(sys.version_info)[:2] >= [3, 6]:
     unicode = str
 ##
+
 
 # This list of English stop words is taken from the "Glasgow Information
 # Retrieval Group". The original list can be found at
@@ -73,38 +74,60 @@ TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
 sentence_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 
+class Manifest(object):
+    """
+    Pretty much what it sounds like...
+    This is a singleton class which *should*:
+    - allow for easy namespace-separation
+    &
+    - reinitialization of what were previously global vars.
+    """
+    # class vars
+    wordcount = {}
+    two_ngram = Counter()
+    three_ngram = Counter()
+    pages_crawled = []
+    pages_to_crawl = []
+    stem_to_word = {}
+    stemmer = nltk.stem.porter.PorterStemmer()
+    page_titles = []
+    page_descriptions = []
+
+    # b/c this is necessary for persistence...I think...it is in python2...
+    def __init__(self):
+        super(Manifest, self).__init__()
+
+    @classmethod
+    def clear_cache(cls):
+        # called at the end of the global `analyze()` function to make a fresh manifest.
+        cls.wordcount = {}
+        cls.two_ngram = Counter()
+        cls.three_ngram = Counter()
+        cls.pages_crawled = []
+        cls.pages_to_crawl = []
+        cls.stem_to_word = {}
+        cls.stemmer = nltk.stem.porter.PorterStemmer()
+        cls.page_titles = []
+        cls.page_descriptions = []
+
+
 class Page(object):
     """
     Container for each page and the analyzer.
     """
 
-    def __init__(self, url='', site='', headers=None):
+    def __init__(self, url='', site=''):
         """
         Variables go here, *not* outside of __init__
         """
-        if not headers:
-            self.headers = requests.utils.default_headers()
-        else:
-            self.headers = headers
         self.site = site
         self.url = url
-        self.title = ''
-        self.description = ''
-        self.keywords = ''
+        self.title = u''
+        self.description = u''
+        self.keywords = u''
         self.warnings = []
         self.social = {}
         self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
-        self.wordcount = {}
-        self.js_tags = []
-        self.raw_meta_tags = []
-        self.bigram = Counter()
-        self.trigram = Counter()
-        self.pages_crawled = []
-        self.pages_to_crawl = []
-        self.stem_to_word = {}
-        self.stemmer = nltk.stem.porter.PorterStemmer()
-        self.page_titles = []
-        self.page_descriptions = []
         super(Page, self).__init__()
 
     def talk(self, output='all'):
@@ -115,43 +138,13 @@ class Page(object):
         return_val = {}
 
         if output == 'all':
-            return_val = {
+            return {
                 'url': self.url,
                 'title': self.title,
                 'description': self.description,
                 'keywords': self.keywords,
                 'warnings': self.warnings,
             }
-
-            sorted_words = sorted(self.wordcount.items(), key=itemgetter(1), reverse=True)
-            sorted_two_ngrams = sorted(self.bigram.items(), key=itemgetter(1), reverse=True)
-            sorted_three_ngrams = sorted(self.trigram.items(), key=itemgetter(1), reverse=True)
-
-            return_val['keywords'] = []
-
-            for w, v in sorted_words:
-
-                if v > 1:
-                    return_val['keywords'].append({
-                        'word': self.stem_to_word[w]['word'],
-                        'count': v,
-                    })
-
-            for w, v in sorted_two_ngrams:
-                if v > 1:
-                    return_val['keywords'].append({
-                        'word': w,
-                        'count': v,
-                    })
-
-            for w, v in sorted_three_ngrams:
-                if v > 1:
-                    return_val['keywords'].append({
-                        'word': w,
-                        'count': v,
-                    })
-
-            return return_val
         elif output == 'warnings':
             return {
                 'url': self.url,
@@ -161,37 +154,6 @@ class Page(object):
             return {self.url: [self.social, self.warnings, ]}
         else:
             return {'error': "I don't know what {0} is.".format(output)}
-
-    def get_keywords(self):
-        sorted_words = sorted(self.wordcount.items(), key=itemgetter(1), reverse=True)
-        sorted_two_ngrams = sorted(self.bigram.items(), key=itemgetter(1), reverse=True)
-        sorted_three_ngrams = sorted(self.trigram.items(), key=itemgetter(1), reverse=True)
-
-        self.keywords = []
-
-        for w, v in sorted_words:
-
-            if v > 1:
-                self.keywords.append({
-                    'word': self.stem_to_word[w]['word'],
-                    'count': v,
-                })
-
-        for w, v in sorted_two_ngrams:
-            if v > 1:
-                self.keywords.append({
-                    'word': w,
-                    'count': v,
-                })
-
-        for w, v in sorted_three_ngrams:
-            if v > 1:
-                self.keywords.append({
-                    'word': w,
-                    'count': v,
-                })
-
-        return self.keywords
 
     def populate(self, bs):
         """
@@ -219,16 +181,16 @@ class Page(object):
         if self.url.startswith('mailto:'):
             return
 
-        if self.url in self.pages_crawled:
+        if self.url in Manifest.pages_crawled:
             return
 
-        self.pages_crawled.append(self.url)
+        Manifest.pages_crawled.append(self.url)
 
         if self.url.startswith('//'):
             self.url = 'http:{0}'.format(self.url)
 
         try:
-            page = requests.get(self.url, headers=self.headers)
+            page = requests.get(self.url)
         except requests.exceptions.HTTPError as e:
             self.warn(u'Returned {0}'.format(page.status_code))
             return
@@ -274,14 +236,16 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get('https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(self.url), headers=self.headers)
+            page = requests.get(
+                'https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(
+                    self.url))
             fb_data = json.loads(page.text)
             fb_share_count = fb_data['share']['share_count']
             fb_comment_count = fb_data['share']['comment_count']
             fb_like_count = fb_data['og_object']['likes']['summary']['total_count']
-            #fb_reaction_count = fb_data['engagement']['reaction_count']
+            # fb_reaction_count = fb_data['engagement']['reaction_count']
         except:
-           pass
+            pass
 
         self.social['facebook'] = {
             'shares': fb_share_count,
@@ -293,7 +257,7 @@ class Page(object):
         su_views = 0
 
         try:
-            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url), headers=self.headers)
+            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
             su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
@@ -343,11 +307,13 @@ class Page(object):
         if numpy.any(logic0):
             return True
 
-        logic1 = numpy.in1d(tags[:-2, 0], to_be) * numpy.in1d(tags[1:-1, 1], VB_nogerund) * numpy.in1d(tags[2:, 1], VB)  # chain of three verbs, active if true and previous not
+        logic1 = numpy.in1d(tags[:-2, 0], to_be) * numpy.in1d(tags[1:-1, 1], VB_nogerund) * numpy.in1d(tags[2:, 1],
+                                                                                                       VB)  # chain of three verbs, active if true and previous not
         if numpy.any(logic1):
             return False
 
-        if numpy.any(numpy.in1d(tags[:, 0], to_be)) * numpy.any(numpy.in1d(tags[:, 1], ['VBN'])):  # 'to be' + past participle verb
+        if numpy.any(numpy.in1d(tags[:, 0], to_be)) * numpy.any(
+                numpy.in1d(tags[:, 1], ['VBN'])):  # 'to be' + past participle verb
             return True
 
         # if no clauses have tripped thus far, it's probably active voice:
@@ -366,28 +332,28 @@ class Page(object):
 
         for ng in two_ngrams:
             vt = ' '.join(ng)
-            self.bigram[vt] += 1
+            Manifest.two_ngram[vt] += 1
 
         three_ngrams = self.getngrams(raw_tokens, 3)
 
         for ng in three_ngrams:
             vt = ' '.join(ng)
-            self.trigram[vt] += 1
+            Manifest.three_ngram[vt] += 1
 
         freq_dist = nltk.FreqDist(tokens)
 
         for word in freq_dist:
-            root = self.stemmer.stem(word)
+            root = Manifest.stemmer.stem(word)
 
-            if root in self.stem_to_word and freq_dist[word] > self.stem_to_word[root]['count']:
-                self.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+            if root in Manifest.stem_to_word and freq_dist[word] > Manifest.stem_to_word[root]['count']:
+                Manifest.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
             else:
-                self.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+                Manifest.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
 
-            if root in self.wordcount:
-                self.wordcount[root] += freq_dist[word]
+            if root in Manifest.wordcount:
+                Manifest.wordcount[root] += freq_dist[word]
             else:
-                self.wordcount[root] = freq_dist[word]
+                Manifest.wordcount[root] = freq_dist[word]
 
         sentences = sentence_tokenizer.tokenize(page_text)
 
@@ -415,11 +381,11 @@ class Page(object):
         elif length > 70:
             self.warn(u'Title tag is too long (more than 70 characters): {0}'.format(t))
 
-        if t in self.page_titles:
+        if t in Manifest.page_titles:
             self.warn(u'Duplicate page title: {0}'.format(t))
             return
 
-        self.page_titles.append(t)
+        Manifest.page_titles.append(t)
 
     def analyze_description(self):
         """
@@ -441,11 +407,11 @@ class Page(object):
         elif length > 255:
             self.warn(u'Description is too long (more than 255 characters): {0}'.format(d))
 
-        if d in self.page_descriptions:
+        if d in Manifest.page_descriptions:
             self.warn(u'Duplicate description: {0}'.format(d))
             return
 
-        self.page_descriptions.append(d)
+        Manifest.page_descriptions.append(d)
 
     def analyze_keywords(self):
         """
@@ -460,7 +426,9 @@ class Page(object):
         length = len(k)
 
         if length > 0:
-            self.warn(u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(k))
+            self.warn(
+                u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(
+                    k))
 
     def visible_tags(self, element):
         if element.parent.name in ['style', 'script', '[document]']:
@@ -476,10 +444,13 @@ class Page(object):
 
         for image in images:
             src = ''
-            if 'src' in image: src = image['src'] 
-            elif 'data-src' in image: src = image['data-src']
-            else: src = image
-            
+            if 'src' in image:
+                src = image['src']
+            elif 'data-src' in image:
+                src = image['data-src']
+            else:
+                src = image
+
             if len(image.get('alt', '')) == 0:
                 self.warn('Image missing alt tag: {0}'.format(src))
 
@@ -509,7 +480,7 @@ class Page(object):
 
             if len(tag.get('title', '')) == 0:
                 self.warn('Anchor missing title tag: {0}'.format(tag_href))
-                
+
             if tag_text in ['click here', 'page', 'article']:
                 self.warn('Anchor text contains generic text: {0}'.format(tag_text))
 
@@ -518,10 +489,10 @@ class Page(object):
 
             modified_url = self.rel_to_abs_url(tag_href)
 
-            if modified_url in self.pages_crawled:
+            if modified_url in Manifest.pages_crawled:
                 continue
 
-            self.pages_to_crawl.append(modified_url)
+            Manifest.pages_to_crawl.append(modified_url)
 
     def rel_to_abs_url(self, link):
         if ':' in link:
@@ -563,6 +534,7 @@ def do_ignore(url_to_check):
     # todo: add blacklist of url types
     return False
 
+
 def check_dns(url_to_check):
     try:
         o = urlsplit(url_to_check)
@@ -573,16 +545,9 @@ def check_dns(url_to_check):
 
     return False
 
-def analyze(site, sitemap=None, headers=None):
-    if not headers:
-        _headers = requests.utils.default_headers()
-    else:
-        _headers = headers
 
+def analyze(site, sitemap=None):
     start_time = time.time()
-    pages_to_crawl = []
-    keyword_cnt = {}
-    keyword_aggregator = []
 
     def calc_total_time():
         return time.time() - start_time
@@ -596,17 +561,17 @@ def analyze(site, sitemap=None, headers=None):
         return output
 
     if sitemap is not None:
-        page = requests.get(sitemap, headers=_headers)
+        page = requests.get(sitemap)
         xml_raw = page.text
         xmldoc = minidom.parseString(xml_raw)
         urls = xmldoc.getElementsByTagName('loc')
 
         for url in urls:
-            pages_to_crawl.append(getText(url.childNodes))
+            Manifest.pages_to_crawl.append(getText(url.childNodes))
 
-    pages_to_crawl.append(site)
+    Manifest.pages_to_crawl.append(site)
 
-    for page in pages_to_crawl:
+    for page in Manifest.pages_to_crawl:
         if page.strip().lower() in crawled:
             continue
 
@@ -618,29 +583,43 @@ def analyze(site, sitemap=None, headers=None):
             continue
 
         crawled.append(page.strip().lower())
-
         pg = Page(page, site)
-
         pg.analyze()
-
         output['pages'].append(pg.talk('normal'))
-        keyword_aggregator.append(pg.get_keywords()) # <-- um...ok! I got it to give keywords.
 
-        pages_to_crawl.extend(pg.pages_to_crawl)
+    sorted_words = sorted(Manifest.wordcount.items(), key=itemgetter(1), reverse=True)
+    sorted_two_ngrams = sorted(Manifest.two_ngram.items(), key=itemgetter(1), reverse=True)
+    sorted_three_ngrams = sorted(Manifest.three_ngram.items(), key=itemgetter(1), reverse=True)
 
-    # um...this works but like...look at it...rat's nest lol.
-    for keywords_by_page in keyword_aggregator:
-        for dict_entry in keywords_by_page:
-            if dict_entry['word'] not in keyword_cnt.keys():
-                keyword_cnt[dict_entry['word']] = dict_entry['count']
-            keyword_cnt[dict_entry['word']] += dict_entry['count']
-    for word, count in sorted(list(keyword_cnt.items()), key=itemgetter(1), reverse=True):
-        output['keywords'].append({
-            'word': word,
-            'count': count,
-        })
+    output['keywords'] = []
 
-    output['total_time'] = calc_total_time() # <-- here we're assigning total_time
+    for w in sorted_words:
+        if w[1] > 1:
+            output['keywords'].append({
+                'word': Manifest.stem_to_word[w[0]]['word'],
+                'count': w[1],
+            })
+
+    for w, v in sorted_two_ngrams:
+        if v > 1:
+            output['keywords'].append({
+                'word': w,
+                'count': v,
+            })
+
+    for w, v in sorted_three_ngrams:
+        if v > 1:
+            output['keywords'].append({
+                'word': w,
+                'count': v,
+            })
+    # Sort one last time...
+    output['keywords'] = sorted(output['keywords'], key=itemgetter('count'), reverse=True)
+
+    output['total_time'] = calc_total_time()
+
+    # Clear our "global" variables for the next run.
+    Manifest.clear_cache()
 
     return output
 
@@ -650,7 +629,7 @@ if __name__ == "__main__":
 
     arg_parser.add_argument('site', help='URL of the site you are wanting to analyze.')
     arg_parser.add_argument('-s', '--sitemap', help='URL of the sitemap to seed the crawler with.')
-    arg_parser.add_argument('-f', '--output-format', help='Output format.', choices=['json', 'html',], default='json')
+    arg_parser.add_argument('-f', '--output-format', help='Output format.', choices=['json', 'html', ], default='json')
 
     args = arg_parser.parse_args()
 
