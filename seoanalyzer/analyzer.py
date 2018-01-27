@@ -122,12 +122,19 @@ class Page(object):
         """
         self.site = site
         self.url = url
-        self.title = ''
-        self.description = ''
-        self.keywords = ''
+        self.title = u''
+        self.description = u''
+        self.keywords = u''
         self.warnings = []
-        self.social = {}
-        self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(' ' * len(punctuation)).encode('utf-8'))
+        self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
+        self.social = {'facebook': {
+                            'shares': 0,
+                            'comments': 0,
+                            'likes': 0,
+                            'clicks': 0},
+                       'stumbleupon' : {
+                           'stumbles' : 0,
+                       }}
         super(Page, self).__init__()
 
     def talk(self, output='all'):
@@ -192,7 +199,7 @@ class Page(object):
         try:
             page = requests.get(self.url)
         except requests.exceptions.HTTPError as e:
-            self.warn('Returned {0}'.format(page.status_code))
+            self.warn(u'Returned {0}'.format(page.status_code))
             return
 
         encoding = 'ascii'
@@ -203,10 +210,10 @@ class Page(object):
             try:
                 raw_html = unicode(page.read(), encoding)
             except:
-                self.warn('Can not read {0}'.format(encoding))
+                self.warn(u'Can not read {0}'.format(encoding))
                 return
         else:
-            raw_html = '{}'.format(page.text)
+            raw_html = u'{}'.format(page.text)
 
         # remove comments, they screw with BeautifulSoup
         clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)
@@ -323,7 +330,7 @@ class Page(object):
         page_text = ''
 
         for element in vt:
-            page_text += element.lower() + ' '
+            page_text += element.lower() + u' '
 
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
@@ -359,7 +366,7 @@ class Page(object):
 
         for s in sentences:
             if self.is_passive_voice(s) is True:
-                self.warn('Passive voice is being used in: {0}'.format(s))
+                self.warn(u'Passive voice is being used in: {0}'.format(s))
 
     def analyze_title(self):
         """
@@ -374,15 +381,15 @@ class Page(object):
         length = len(t)
 
         if length == 0:
-            self.warn('Missing title tag')
+            self.warn(u'Missing title tag')
             return
         elif length < 10:
-            self.warn('Title tag is too short (less than 10 characters): {0}'.format(t))
+            self.warn(u'Title tag is too short (less than 10 characters): {0}'.format(t))
         elif length > 70:
-            self.warn('Title tag is too long (more than 70 characters): {0}'.format(t))
+            self.warn(u'Title tag is too long (more than 70 characters): {0}'.format(t))
 
         if t in Manifest.page_titles:
-            self.warn('Duplicate page title: {0}'.format(t))
+            self.warn(u'Duplicate page title: {0}'.format(t))
             return
 
         Manifest.page_titles.append(t)
@@ -400,15 +407,15 @@ class Page(object):
         length = len(d)
 
         if length == 0:
-            self.warn('Missing description')
+            self.warn(u'Missing description')
             return
         elif length < 140:
-            self.warn('Description is too short (less than 140 characters): {0}'.format(d))
+            self.warn(u'Description is too short (less than 140 characters): {0}'.format(d))
         elif length > 255:
-            self.warn('Description is too long (more than 255 characters): {0}'.format(d))
+            self.warn(u'Description is too long (more than 255 characters): {0}'.format(d))
 
         if d in Manifest.page_descriptions:
-            self.warn('Duplicate description: {0}'.format(d))
+            self.warn(u'Duplicate description: {0}'.format(d))
             return
 
         Manifest.page_descriptions.append(d)
@@ -427,7 +434,7 @@ class Page(object):
 
         if length > 0:
             self.warn(
-                'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(
+                u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(
                     k))
 
     def visible_tags(self, element):
