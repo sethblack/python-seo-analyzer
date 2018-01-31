@@ -529,10 +529,6 @@ def analyze(site, sitemap=None):
 
         output['pages'].append(pg.talk())
 
-    # monograms = {k:v for k,v in Manifest.wordcount.items() if v > 4}
-    # bigrams = [w for w in Manifest.two_ngram if w['count'] > 4]
-    # trigrams = [w for w in Manifest.three_ngram if w['count'] > 4]
-
     sorted_words = sorted(Manifest.wordcount.items(), key=itemgetter(1), reverse=True)
     sorted_bigrams = sorted(Manifest.bigrams.items(), key=itemgetter(1), reverse=True)
     sorted_trigrams = sorted(Manifest.trigrams.items(), key=itemgetter(1), reverse=True)
