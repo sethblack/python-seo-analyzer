@@ -219,6 +219,7 @@ class Page(object):
 
         self.analyze_title()
         self.analyze_description()
+        self.analyze_og(soup_lower)
         self.analyze_a_tags(soup_unmodified)
         self.analyze_img_tags(soup_lower)
         self.analyze_h1_tags(soup_lower)
@@ -321,6 +322,23 @@ class Page(object):
                 self.keywords[root] += cnt
             else:
                 self.keywords[root] = cnt
+
+    def analyze_og(self, bs):
+        """
+        Validate open graph tags
+        """
+        og_title = bs.findAll('meta', attrs={'property': 'og:title'})
+        og_description = bs.findAll('meta', attrs={'property': 'og:description'})
+        og_image = bs.findAll('meta', attrs={'property': 'og:image'})
+
+        if len(og_title) == 0:
+            self.warn(u'Missing og:title')
+
+        if len(og_description) == 0:
+            self.warn(u'Missing og:descriptoin')
+
+        if len(og_image) == 0:
+            self.warn(u'Missing og:image')
 
     def analyze_title(self):
         """
