@@ -7,7 +7,7 @@ from string import punctuation
 from urllib.parse import urlsplit
 from xml.dom import minidom
 
-from stemmer import stem
+from seoanalyzer.stemmer import stem
 
 import argparse
 import json

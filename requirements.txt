@@ -1,5 +1,3 @@
 BeautifulSoup4
-nltk
-numpy
 requests
 jinja2
