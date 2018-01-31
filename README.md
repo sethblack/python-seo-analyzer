@@ -3,7 +3,7 @@ Python SEO Analyzer
 
 An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any general SEO related issues.
 
-Requires Python 3.4+, BeautifulSoup4, flask, minidom, nltk, numpy and urllib2.
+Requires Python 3.4+, BeautifulSoup4 and urllib2.
 
 Installation
 ------------
