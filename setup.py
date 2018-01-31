@@ -15,7 +15,7 @@ setup(
     package_data={'seoanalyzer': ['templates/index.html']},
     include_package_data = True,
     install_requires = [
-        'BeautifulSoup4', 'requests','jinja2',
+        'BeautifulSoup4', 'requests', 'jinja2', 'urllib3',
     ],
     # no idea why this needed fixing, the diff says it didn't change...
     entry_points = {
