@@ -7,14 +7,16 @@ from string import punctuation
 from urllib.parse import urlsplit
 from xml.dom import minidom
 
+from seoanalyzer.stemmer import stem
+
 import argparse
 import json
 import nltk
-import numpy
 import re
 import requests
 import socket
 import time
+
 ##
 # python 3.6+ support.
 import sys
@@ -71,7 +73,6 @@ ENGLISH_STOP_WORDS = frozenset([
     "yourselves"])
 
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
-sentence_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
 
 class Manifest(object):
@@ -83,13 +84,12 @@ class Manifest(object):
     - reinitialization of what were previously global vars.
     """
     # class vars
-    wordcount = {}
-    two_ngram = Counter()
-    three_ngram = Counter()
+    wordcount = Counter()
+    bigrams = Counter()
+    trigrams = Counter()
     pages_crawled = []
     pages_to_crawl = []
     stem_to_word = {}
-    stemmer = nltk.stem.porter.PorterStemmer()
     page_titles = []
     page_descriptions = []
 
@@ -100,13 +100,12 @@ class Manifest(object):
     @classmethod
     def clear_cache(cls):
         # called at the end of the global `analyze()` function to make a fresh manifest.
-        cls.wordcount = {}
-        cls.two_ngram = Counter()
-        cls.three_ngram = Counter()
+        cls.wordcount = Counter()
+        cls.bigrams = Counter()
+        cls.trigrams = Counter()
         cls.pages_crawled = []
         cls.pages_to_crawl = []
         cls.stem_to_word = {}
-        cls.stemmer = nltk.stem.porter.PorterStemmer()
         cls.page_titles = []
         cls.page_descriptions = []
 
@@ -124,7 +123,7 @@ class Page(object):
         self.url = url
         self.title = u''
         self.description = u''
-        self.keywords = u''
+        self.keywords = {}
         self.warnings = []
         self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
         self.social = {'facebook': {
@@ -137,30 +136,18 @@ class Page(object):
                        }}
         super(Page, self).__init__()
 
-    def talk(self, output='all'):
+    def talk(self):
         """
         Returns a dictionary that can be printed
         """
 
-        return_val = {}
-
-        if output == 'all':
-            return {
-                'url': self.url,
-                'title': self.title,
-                'description': self.description,
-                'keywords': self.keywords,
-                'warnings': self.warnings,
-            }
-        elif output == 'warnings':
-            return {
-                'url': self.url,
-                'warnings': self.warnings,
-            }
-        elif output == 'normal':
-            return {self.url: [self.social, self.warnings, ]}
-        else:
-            return {'error': "I don't know what {0} is.".format(output)}
+        return {
+            'url': self.url,
+            'title': self.title,
+            'description': self.description,
+            'keywords': self.sort_freq_dist(self.keywords, limit=5),
+            'warnings': self.warnings,
+        }
 
     def populate(self, bs):
         """
@@ -179,7 +166,9 @@ class Page(object):
         keywords = bs.findAll('meta', attrs={'name': 'keywords'})
 
         if len(keywords) > 0:
-            self.keywords = keywords[0].get('content')
+            self.warn(
+                u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(
+                    k))
 
     def analyze(self):
         """
@@ -230,11 +219,21 @@ class Page(object):
 
         self.analyze_title()
         self.analyze_description()
-        self.analyze_keywords()
+        self.analyze_og(soup_lower)
         self.analyze_a_tags(soup_unmodified)
         self.analyze_img_tags(soup_lower)
         self.analyze_h1_tags(soup_lower)
         self.social_shares()
+
+    def word_list_freq_dist(self, wordlist):
+        freq = [wordlist.count(w) for w in wordlist]
+        return dict(zip(wordlist, freq))
+
+    def sort_freq_dist(self, freqdist, limit=1):
+        aux = [(freqdist[key], Manifest.stem_to_word[key]) for key in freqdist if freqdist[key] >= limit]
+        aux.sort()
+        aux.reverse()
+        return aux
 
     def social_shares(self):
         fb_share_count = 0
@@ -284,48 +283,6 @@ class Page(object):
     def getngrams(self, D, n=2):
         return zip(*[D[i:] for i in range(n)])
 
-    def is_passive_voice(self, sentence):
-        # determine if a sentence is (probably) in "active" or "passive" voice
-        # return 1 if active, 0 if passive, -1 if indeterminate (rare)
-
-        if len(nltk.sent_tokenize(sentence)) > 1:
-            return None
-
-        tags0 = numpy.asarray(nltk.pos_tag(nltk.word_tokenize(sentence)))
-        try:
-            tags = tags0[numpy.where(~numpy.in1d(tags0[:, 1], ['RB', 'RBR', 'RBS', 'TO', ]))]  # remove adverbs, 'TO'
-        except IndexError:
-            self.warn("tags0 is wrong: {0}".format(tags0))
-            return None
-
-        if len(tags) < 2:  # too short to really know.
-            return False
-
-        to_be = ['be', 'am', 'is', 'are', 'was', 'were', 'been', 'has',
-                 'have', 'had', 'do', 'did', 'does', 'can', 'could',
-                 'shall', 'should', 'will', 'would', 'may', 'might',
-                 'must', ]
-
-        WH = ['WDT', 'WP', 'WP$', 'WRB', ]
-        VB = ['VBG', 'VBD', 'VBN', 'VBP', 'VBZ', 'VB', ]
-        VB_nogerund = ['VBD', 'VBN', 'VBP', 'VBZ', ]
-
-        logic0 = numpy.in1d(tags[:-1, 1], ['IN']) * numpy.in1d(tags[1:, 1], WH)  # passive if true
-        if numpy.any(logic0):
-            return True
-
-        logic1 = numpy.in1d(tags[:-2, 0], to_be) * numpy.in1d(tags[1:-1, 1], VB_nogerund) * numpy.in1d(tags[2:, 1],
-                                                                                                       VB)  # chain of three verbs, active if true and previous not
-        if numpy.any(logic1):
-            return False
-
-        if numpy.any(numpy.in1d(tags[:, 0], to_be)) * numpy.any(
-                numpy.in1d(tags[:, 1], ['VBN'])):  # 'to be' + past participle verb
-            return True
-
-        # if no clauses have tripped thus far, it's probably active voice:
-        return False
-
     def process_text(self, vt):
         page_text = ''
 
@@ -335,38 +292,53 @@ class Page(object):
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
 
-        two_ngrams = self.getngrams(raw_tokens, 2)
+        bigrams = self.getngrams(raw_tokens, 2)
 
-        for ng in two_ngrams:
+        for ng in bigrams:
             vt = ' '.join(ng)
-            Manifest.two_ngram[vt] += 1
+            Manifest.bigrams[vt] += 1
 
-        three_ngrams = self.getngrams(raw_tokens, 3)
+        trigrams = self.getngrams(raw_tokens, 3)
 
-        for ng in three_ngrams:
+        for ng in trigrams:
             vt = ' '.join(ng)
-            Manifest.three_ngram[vt] += 1
+            Manifest.trigrams[vt] += 1
 
-        freq_dist = nltk.FreqDist(tokens)
+        freq_dist = self.word_list_freq_dist(tokens)
 
         for word in freq_dist:
-            root = Manifest.stemmer.stem(word)
+            root = stem(word)
+            cnt = freq_dist[word]
 
-            if root in Manifest.stem_to_word and freq_dist[word] > Manifest.stem_to_word[root]['count']:
-                Manifest.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
-            else:
-                Manifest.stem_to_word[root] = {'word': word, 'count': freq_dist[word]}
+            if root not in Manifest.stem_to_word:
+                Manifest.stem_to_word[root] = word
 
             if root in Manifest.wordcount:
-                Manifest.wordcount[root] += freq_dist[word]
+                Manifest.wordcount[root] += cnt
             else:
-                Manifest.wordcount[root] = freq_dist[word]
+                Manifest.wordcount[root] = cnt
 
-        sentences = sentence_tokenizer.tokenize(page_text)
+            if root in self.keywords:
+                self.keywords[root] += cnt
+            else:
+                self.keywords[root] = cnt
 
-        for s in sentences:
-            if self.is_passive_voice(s) is True:
-                self.warn(u'Passive voice is being used in: {0}'.format(s))
+    def analyze_og(self, bs):
+        """
+        Validate open graph tags
+        """
+        og_title = bs.findAll('meta', attrs={'property': 'og:title'})
+        og_description = bs.findAll('meta', attrs={'property': 'og:description'})
+        og_image = bs.findAll('meta', attrs={'property': 'og:image'})
+
+        if len(og_title) == 0:
+            self.warn(u'Missing og:title')
+
+        if len(og_description) == 0:
+            self.warn(u'Missing og:descriptoin')
+
+        if len(og_image) == 0:
+            self.warn(u'Missing og:image')
 
     def analyze_title(self):
         """
@@ -420,23 +392,6 @@ class Page(object):
 
         Manifest.page_descriptions.append(d)
 
-    def analyze_keywords(self):
-        """
-        Validate keywords
-        """
-
-        # getting lazy, create a local variable so save having to
-        # type self.x a billion times
-        k = self.keywords
-
-        # calculate the length of keywords once
-        length = len(k)
-
-        if length > 0:
-            self.warn(
-                u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(
-                    k))
-
     def visible_tags(self, element):
         if element.parent.name in ['style', 'script', '[document]']:
             return False
@@ -460,11 +415,6 @@ class Page(object):
 
             if len(image.get('alt', '')) == 0:
                 self.warn('Image missing alt tag: {0}'.format(src))
-
-            # note: title tags on images are not as relevant to search engines as alt tags.
-            # ref: https://webmasters.googleblog.com/2007/12/using-alt-attributes-smartly.html
-            # if len(image.get('title', '')) == 0:
-            #    self.warn('Image missing title tag: {0}'.format(src))
 
     def analyze_h1_tags(self, bs):
         """
@@ -590,36 +540,40 @@ def analyze(site, sitemap=None):
             continue
 
         crawled.append(page.strip().lower())
+
         pg = Page(page, site)
+
         pg.analyze()
-        output['pages'].append(pg.talk('normal'))
+
+        output['pages'].append(pg.talk())
 
     sorted_words = sorted(Manifest.wordcount.items(), key=itemgetter(1), reverse=True)
-    sorted_two_ngrams = sorted(Manifest.two_ngram.items(), key=itemgetter(1), reverse=True)
-    sorted_three_ngrams = sorted(Manifest.three_ngram.items(), key=itemgetter(1), reverse=True)
+    sorted_bigrams = sorted(Manifest.bigrams.items(), key=itemgetter(1), reverse=True)
+    sorted_trigrams = sorted(Manifest.trigrams.items(), key=itemgetter(1), reverse=True)
 
     output['keywords'] = []
 
     for w in sorted_words:
-        if w[1] > 1:
+        if w[1] > 4:
             output['keywords'].append({
-                'word': Manifest.stem_to_word[w[0]]['word'],
+                'word': Manifest.stem_to_word[w[0]],
                 'count': w[1],
             })
 
-    for w, v in sorted_two_ngrams:
-        if v > 1:
+    for w, v in sorted_bigrams:
+        if v > 4:
             output['keywords'].append({
                 'word': w,
                 'count': v,
             })
 
-    for w, v in sorted_three_ngrams:
-        if v > 1:
+    for w, v in sorted_trigrams:
+        if v > 4:
             output['keywords'].append({
                 'word': w,
                 'count': v,
             })
+
     # Sort one last time...
     output['keywords'] = sorted(output['keywords'], key=itemgetter('count'), reverse=True)
 
