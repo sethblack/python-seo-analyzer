@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
-from setuptools import setup
-from distutils.command.install import install as _install
+from setuptools import setup, find_packages
+# from distutils.command.install import install as _install
 
 setup(
     name = 'pyseoanalyzer',
-    version = '3.1.0',
+    version = '3.1.1',
     description = 'An SEO tool that gives you general Search Engine Optimization directions.',
     author = 'Seth Black',
     author_email = 'sblack@sethserver.com',
     url = 'https://github.com/sethblack/python-seo-analyzer',
-    packages = ['seoanalyzer'],
+    packages = find_packages(),
     keywords = ['search engine optimization', 'seo', 'website parser', 'crawler', 'scraper',],
-    package_data={'seoanalyzer': ['templates/index.html']},
+    package_data={'seoanalyzer': ['templates/index.html',]},
     include_package_data = True,
     install_requires = [
         'BeautifulSoup4', 'requests', 'jinja2', 'urllib3',
@@ -37,6 +37,7 @@ setup(
         "Topic :: Text Processing",
         "Topic :: Internet :: WWW/HTTP",
     ],
+    zipsafe=False,
     long_description = """\
 SEOAnalyzer
 -----------
@@ -44,5 +45,5 @@ SEOAnalyzer
 An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.
 
 This version requires Python 3.4 or later. C'mon everyone, get with the times, Python 3 is great!
-"""
+""",
 )

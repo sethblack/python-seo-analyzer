@@ -2,6 +2,7 @@
 
 # C extensions
 *.so
+*/__pychache__/*
 
 # Packages
 *.egg

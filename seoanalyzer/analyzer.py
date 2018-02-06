@@ -6,16 +6,19 @@ from operator import itemgetter
 from string import punctuation
 from urllib.parse import urlsplit
 from xml.dom import minidom
+from requests.structures import CaseInsensitiveDict
 
 from seoanalyzer.stemmer import stem
 
 import argparse
 import json
-import nltk
+# import nltk
 import re
+import certifi
 import requests
 import socket
 import time
+import os
 
 ##
 # python 3.6+ support.
@@ -73,7 +76,20 @@ ENGLISH_STOP_WORDS = frozenset([
     "yourselves"])
 
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
+SESSION_TESTING_URL = 'https://httpbin.org/get'
 
+
+def get_default_headers():
+    """This method must come before class-var declaration or referencing it gets wonky."""
+    return  CaseInsensitiveDict(
+        {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml',
+            'Accept-Language': 'en-US,en',
+            'Upgrade-Insecure-Requests': '1',
+            'Cache-Control': 'max-age=0',
+        }
+    )
 
 class Manifest(object):
     """
@@ -92,10 +108,41 @@ class Manifest(object):
     stem_to_word = {}
     page_titles = []
     page_descriptions = []
+    session = requests.Session()
+    session.headers = get_default_headers()
+    # session.cert = certifi.where()
 
     # b/c this is necessary for persistence...I think...it is in python2...
     def __init__(self):
         super(Manifest, self).__init__()
+
+    @classmethod
+    def modify_session(cls,**kwargs):
+        """Use **kwargs to enter arbitrary k/v pairs and load them as request.Session() attributes."""
+        session_param_dict = kwargs
+        for param_name, param in session_param_dict.items():
+            try:
+                assert param_name in requests.Session.__attrs__
+                # this is dangerous as all hell:
+                #TODO: Find an elegant way to run type & content checks on `param`.
+                cls.session.__dict__[param_name] = param
+            except AssertionError as err:
+                print("You've passed in {} as param to modify your requests session.".format(param_name))
+                print("Options are: {}".format(requests.Session.__attrs__))
+                print("Bypassing {}...".format(param_name) + os.linesep)
+                # explicit garbage collection. This is implied but whateva.
+                del session_param_dict[param_name]
+                continue
+
+    @classmethod
+    def test_session_modifications(cls):
+        try:
+            information = cls.session.get(SESSION_TESTING_URL)
+        except Exception as err:
+            information = 'ERROR'
+            print(err.args)
+            print(err)
+        return information
 
     @classmethod
     def clear_cache(cls):
@@ -108,6 +155,9 @@ class Manifest(object):
         cls.stem_to_word = {}
         cls.page_titles = []
         cls.page_descriptions = []
+        cls.session = requests.Session()
+        cls.session.headers = get_default_headers()
+        # cls.session.cert = certifi.where()
 
 
 class Page(object):
@@ -121,6 +171,7 @@ class Page(object):
         """
         self.site = site
         self.url = url
+        self.session = Manifest.session
         self.title = u''
         self.description = u''
         self.keywords = {}
@@ -167,8 +218,7 @@ class Page(object):
 
         if len(keywords) > 0:
             self.warn(
-                u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(
-                    k))
+                u'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {0}'.format(keywords))
 
     def analyze(self):
         """
@@ -186,7 +236,7 @@ class Page(object):
             self.url = 'http:{0}'.format(self.url)
 
         try:
-            page = requests.get(self.url)
+            page = self.session.get(self.url)
         except requests.exceptions.HTTPError as e:
             self.warn(u'Returned {0}'.format(page.status_code))
             return
@@ -242,7 +292,7 @@ class Page(object):
         fb_click_count = 0
 
         try:
-            page = requests.get(
+            page = self.session.get(
                 'https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(
                     self.url))
             fb_data = json.loads(page.text)
@@ -263,7 +313,7 @@ class Page(object):
         su_views = 0
 
         try:
-            page = requests.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
+            page = self.session.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
             su_data = page.json()
             if 'result' in su_data and 'views' in su_data['result']:
                 su_views = su_data['result']['views']
@@ -476,6 +526,8 @@ class Page(object):
         self.warnings.append(warning)
 
 
+
+
 def getText(nodelist):
     """
     Stolen from the minidom documentation
@@ -502,9 +554,26 @@ def check_dns(url_to_check):
 
     return False
 
+def clean_up():
+    # close our client-session
+    Manifest.session.close()
+    # garbage-collect & reinit the whole manifest
+    Manifest.clear_cache()
 
-def analyze(site, sitemap=None):
+
+def analyze(site, sitemap=None, verbose=False, **session_params):
+    """Session params are  headers, default cookies, etc...
+
+       To quickly see your options, go into python and type:
+       >>> print(requests.Session.__attrs__)
+    """
     start_time = time.time()
+
+    # Init our HTTP session
+    if session_params:
+        Manifest.modify_session(**session_params)
+    else:
+        Manifest()
 
     def calc_total_time():
         return time.time() - start_time
@@ -518,7 +587,7 @@ def analyze(site, sitemap=None):
         return output
 
     if sitemap is not None:
-        page = requests.get(sitemap)
+        page = Manifest.session.get(sitemap)
         xml_raw = page.text
         xmldoc = minidom.parseString(xml_raw)
         urls = xmldoc.getElementsByTagName('loc')
@@ -527,8 +596,11 @@ def analyze(site, sitemap=None):
             Manifest.pages_to_crawl.append(getText(url.childNodes))
 
     Manifest.pages_to_crawl.append(site)
-
+    on_page = 0
     for page in Manifest.pages_to_crawl:
+        on_page += 1
+        if verbose:
+            print('Analyzing page {} out of {}...'.format(on_page, len(Manifest.pages_to_crawl)))
         if page.strip().lower() in crawled:
             continue
 
@@ -580,7 +652,7 @@ def analyze(site, sitemap=None):
     output['total_time'] = calc_total_time()
 
     # Clear our "global" variables for the next run.
-    Manifest.clear_cache()
+
 
     return output
 
