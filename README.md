@@ -46,4 +46,14 @@ from seoanalyzer import analyze
 output = analyze(site, sitemap)
 
 print(output)
-```
+```  
+
+Notes:
+------
+
+If you get `requests.exceptions.SSLError` at either the command-line or via the python-API, try using:
+ - http://www.foo.bar
+ 
+ **insead** of..
+ 
+ -  https://www.foo.bar
