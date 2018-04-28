@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 from xml.dom import minidom
 from requests.structures import CaseInsensitiveDict
 
-from stemmer import stem
+from seoanalyzer.stemmer import stem
 
 import argparse
 import json
