@@ -48,6 +48,11 @@ output = analyze(site, sitemap)
 print(output)
 ```
 
+Alternatively, you can run the analysis as a script from the seoanalyzer folder.
+
+```console
+rocketoc:~$ python3 analyzer.py https://www.sethserver.com/ -f html > results.html
+```
 
 Notes:
 ------

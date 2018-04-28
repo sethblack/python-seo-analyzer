@@ -8,7 +8,6 @@ from urllib.parse import urlsplit
 from xml.dom import minidom
 from requests.structures import CaseInsensitiveDict
 
-from seoanalyzer.stemmer import stem
 
 import argparse
 import json
@@ -19,6 +18,11 @@ import requests
 import socket
 import time
 import os
+
+try:
+    from seoanalyzer.stemmer import stem
+except ImportError:
+    from stemmer import stem
 
 ##
 # python 3.6+ support.
