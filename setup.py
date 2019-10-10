@@ -4,26 +4,25 @@ from setuptools import setup, find_packages
 # from distutils.command.install import install as _install
 
 setup(
-    name = 'pyseoanalyzer',
-    version = '3.1.1',
-    description = 'An SEO tool that gives you general Search Engine Optimization directions.',
-    author = 'Seth Black',
-    author_email = 'sblack@sethserver.com',
-    url = 'https://github.com/sethblack/python-seo-analyzer',
-    packages = find_packages(),
-    keywords = ['search engine optimization', 'seo', 'website parser', 'crawler', 'scraper',],
+    name='pyseoanalyzer',
+    version='3.1.2',
+    description='An SEO tool that gives you general Search Engine Optimization directions.',
+    author='Seth Black',
+    author_email='sblack@sethserver.com',
+    url='https://github.com/sethblack/python-seo-analyzer',
+    packages=find_packages(),
+    keywords=['search engine optimization', 'seo', 'website parser', 'crawler', 'scraper',],
     package_data={'seoanalyzer': ['templates/index.html',]},
-    include_package_data = True,
-    install_requires = [
+    include_package_data=True,
+    install_requires=[
         'BeautifulSoup4', 'requests', 'jinja2', 'urllib3',
     ],
-    # no idea why this needed fixing, the diff says it didn't change...
-    entry_points = {
+    entry_points={
         'console_scripts' : [
             'seoanalyze = seoanalyzer.__main__:main'
         ]
     },
-    classifiers = [
+    classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3 :: Only",
@@ -37,8 +36,8 @@ setup(
         "Topic :: Text Processing",
         "Topic :: Internet :: WWW/HTTP",
     ],
-    zipsafe=False,
-    long_description = """\
+    zip_safe=False,
+    long_description="""\
 SEOAnalyzer
 -----------
 

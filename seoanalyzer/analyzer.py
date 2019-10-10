@@ -674,9 +674,9 @@ if __name__ == "__main__":
 
     if args.output_format == 'html':
         from jinja2 import Environment
-        from jinja2 import FileSystemLoader
+        from jinja2 import PackageLoader
 
-        env = Environment(loader=FileSystemLoader('templates'))
+        env = Environment(loader=PackageLoader('seoanalyzer'))
         template = env.get_template('index.html')
         output_from_parsed_template = template.render(result=output)
         print(output_from_parsed_template)
