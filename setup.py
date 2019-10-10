@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pyseoanalyzer',
-    version='3.1.1',
+    version='3.1.2',
     description='An SEO tool that gives you general Search Engine Optimization directions.',
     author='Seth Black',
     author_email='sblack@sethserver.com',
