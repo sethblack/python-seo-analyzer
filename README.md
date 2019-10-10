@@ -1,9 +1,9 @@
 Python SEO Analyzer
-===========
+===================
 
 An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any general SEO related issues.
 
-Requires Python 3.4+, BeautifulSoup4 and urllib2.
+Requires Python 3.4+, BeautifulSoup4 and urllib3.
 
 Installation
 ------------
@@ -19,20 +19,20 @@ Command-line Usage
 
 If you run without a sitemap it will start crawling at the homepage.
 
-```
-#> seoanalyze http://www.domain.com/
+```sh
+seoanalyze http://www.domain.com/
 ```
 
 Or you can specify the path to a sitmap to seed the urls to scan list.
 
-```
-#> seoanalyze http://www.domain.com/ --sitemap path/to/sitemap.xml
+```sh
+seoanalyze http://www.domain.com/ --sitemap path/to/sitemap.xml
 ```
 
 HTML output can be generated from the analysis instead of json.
 
-```
-#> seoanalyze http://www.domain.com/ --output-format html
+```sh
+seoanalyze http://www.domain.com/ --output-format html
 ```
 
 API
@@ -50,12 +50,12 @@ print(output)
 
 Alternatively, you can run the analysis as a script from the seoanalyzer folder.
 
-```console
-rocketoc:~$ python3 analyzer.py https://www.sethserver.com/ -f html > results.html
+```sh
+python analyzer.py https://www.sethserver.com/ -f html > results.html
 ```
 
-Notes:
-------
+Notes
+-----
 
 If you get `requests.exceptions.SSLError` at either the command-line or via the python-API, try using:
  - http://www.foo.bar
