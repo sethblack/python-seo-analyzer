@@ -676,7 +676,7 @@ if __name__ == "__main__":
         from jinja2 import Environment
         from jinja2 import PackageLoader
 
-        env = Environment(loader=PackageLoader('pyseoanalyzer', 'templates'))
+        env = Environment(loader=PackageLoader('seoanalyzer'))
         template = env.get_template('index.html')
         output_from_parsed_template = template.render(result=output)
         print(output_from_parsed_template)

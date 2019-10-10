@@ -36,7 +36,7 @@ setup(
         "Topic :: Text Processing",
         "Topic :: Internet :: WWW/HTTP",
     ],
-    zipsafe=False,
+    zip_safe=False,
     long_description="""\
 SEOAnalyzer
 -----------
