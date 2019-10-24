@@ -173,6 +173,7 @@ class Page(object):
         """
         Variables go here, *not* outside of __init__
         """
+
         self.site = site
         self.url = url
         self.session = Manifest.session
@@ -181,14 +182,9 @@ class Page(object):
         self.keywords = {}
         self.warnings = []
         self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(u' ' * len(punctuation)).encode('utf-8'))
-        self.social = {'facebook': {
-                            'shares': 0,
-                            'comments': 0,
-                            'likes': 0,
-                            'clicks': 0},
-                       'stumbleupon' : {
-                           'stumbles' : 0,
-                       }}
+        self.social = {
+            'facebook': {'shares': 0, 'comments': 0, 'likes': 0, 'clicks': 0},
+        }
         super(Page, self).__init__()
 
     def talk(self):
