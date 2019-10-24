@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 
+from os import path
 from setuptools import setup, find_packages
-# from distutils.command.install import install as _install
+
+this_directory = path.abspath(path.dirname(__file__))
+
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='pyseoanalyzer',
-    version='3.1.2',
-    description='An SEO tool that gives you general Search Engine Optimization directions.',
+    version='3.1.3',
+    description='An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.',
     author='Seth Black',
     author_email='sblack@sethserver.com',
     url='https://github.com/sethblack/python-seo-analyzer',
@@ -37,12 +42,6 @@ setup(
         "Topic :: Internet :: WWW/HTTP",
     ],
     zip_safe=False,
-    long_description="""\
-SEOAnalyzer
------------
-
-An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.
-
-This version requires Python 3.4 or later. C'mon everyone, get with the times, Python 3 is great!
-""",
+    long_description=long_description,
+    long_description_content_type='text/markdown'
 )
