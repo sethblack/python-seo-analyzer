@@ -1,6 +1,8 @@
 Python SEO Analyzer
 ===================
 
+[![Googling Google by taleas.com](https://www.taleas.com/comics/googling-google.html "Googling Google by taleas.com")](https://www.taleas.com/comics/googling-google.html)
+
 An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any general SEO related issues.
 
 Requires Python 3.4+, BeautifulSoup4 and urllib3.
