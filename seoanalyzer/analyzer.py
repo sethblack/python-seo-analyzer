@@ -229,7 +229,7 @@ class Page(object):
 
         # Quick patch to fix https://github.com/sethblack/python-seo-analyzer/issues/47
         # I'm going to add a whitelist for valid URLs so I don't have
-        # to do this for every strange link format.
+        # to do this for every strange link format.]
         if self.url.startswith('javascript'):
             return
 
@@ -263,8 +263,8 @@ class Page(object):
         # remove comments, they screw with BeautifulSoup
         clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)
 
-        soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser').encode('utf-8')
-        soup_unmodified = BeautifulSoup(clean_html, 'html.parser').encode('utf-8')
+        soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser') #.encode('utf-8')
+        soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
 
         texts = soup_lower.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
