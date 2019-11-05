@@ -227,6 +227,12 @@ class Page(object):
         if self.url.startswith('mailto:'):
             return
 
+        # Quick patch to fix https://github.com/sethblack/python-seo-analyzer/issues/47
+        # I'm going to add a whitelist for valid URLs so I don't have
+        # to do this for every strange link format.
+        if self.url.startswith('javascript'):
+            return
+
         if self.url in Manifest.pages_crawled:
             return
 
@@ -257,8 +263,8 @@ class Page(object):
         # remove comments, they screw with BeautifulSoup
         clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)
 
-        soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser')
-        soup_unmodified = BeautifulSoup(clean_html, 'html.parser')
+        soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser').encode('utf-8')
+        soup_unmodified = BeautifulSoup(clean_html, 'html.parser').encode('utf-8')
 
         texts = soup_lower.findAll(text=True)
         visible_text = filter(self.visible_tags, texts)
@@ -311,18 +317,6 @@ class Page(object):
         }
 
         su_views = 0
-
-        try:
-            page = self.session.get('http://www.stumbleupon.com/services/1.01/badge.getinfo?url={0}'.format(self.url))
-            su_data = page.json()
-            if 'result' in su_data and 'views' in su_data['result']:
-                su_views = su_data['result']['views']
-        except:
-            pass
-
-        self.social['stumbleupon'] = {
-            'stumbles': su_views,
-        }
 
     def raw_tokenize(self, rawtext):
         return TOKEN_REGEX.findall(rawtext.lower())
@@ -526,8 +520,6 @@ class Page(object):
         self.warnings.append(warning)
 
 
-
-
 def getText(nodelist):
     """
     Stolen from the minidom documentation
@@ -651,10 +643,21 @@ def analyze(site, sitemap=None, verbose=False, **session_params):
 
     output['total_time'] = calc_total_time()
 
-    # Clear our "global" variables for the next run.
-
-
     return output
+
+
+def print_output(output, output_format='json'):
+    if output_format == 'html':
+        from jinja2 import Environment
+        from jinja2 import PackageLoader
+
+        env = Environment(loader=PackageLoader('seoanalyzer'))
+        template = env.get_template('index.html')
+        output_from_parsed_template = template.render(result=output)
+
+        print(output_from_parsed_template)
+    elif output_format == 'json':
+        print(json.dumps(output, indent=4, separators=(',', ': ')))
 
 
 if __name__ == "__main__":
@@ -668,13 +671,4 @@ if __name__ == "__main__":
 
     output = analyze(args.site, args.sitemap)
 
-    if args.output_format == 'html':
-        from jinja2 import Environment
-        from jinja2 import PackageLoader
-
-        env = Environment(loader=PackageLoader('seoanalyzer'))
-        template = env.get_template('index.html')
-        output_from_parsed_template = template.render(result=output)
-        print(output_from_parsed_template)
-    elif args.output_format == 'json':
-        print(json.dumps(output, indent=4, separators=(',', ': ')))
+    print_output(output, output_format=args.output_format)
