@@ -62,6 +62,6 @@ Notes
 If you get `requests.exceptions.SSLError` at either the command-line or via the python-API, try using:
  - http://www.foo.bar
  
- **insead** of..
+ **instead** of..
  
  -  https://www.foo.bar
