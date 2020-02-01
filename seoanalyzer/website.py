@@ -1,3 +1,4 @@
+from collections import Counter
 from urllib.parse import urlsplit
 from xml.dom import minidom
 
@@ -13,6 +14,9 @@ class Website():
         self.crawled_pages = []
         self.crawled_urls = set([])
         self.page_queue = []
+        self.wordcount = Counter()
+        self.bigrams = Counter()
+        self.trigrams = Counter()
         
 
     def check_dns(self, url_to_check):
