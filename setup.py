@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pyseoanalyzer',
-    version='4.0.0',
+    version='4.0.1',
     description='An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any technical SEO issues.',
     author='Seth Black',
     author_email='sblack@sethserver.com',
