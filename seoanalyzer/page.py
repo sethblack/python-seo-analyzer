@@ -95,7 +95,10 @@ class Page():
             'description': self.description,
             'word_count': self.total_word_count,
             'keywords': self.sort_freq_dist(self.keywords, limit=5),
+            'bigrams': self.bigrams,
+            'trigrams': self.trigrams,
             'warnings': self.warnings,
+            'social': self.social,
         }
 
     def populate(self, bs):
@@ -163,7 +166,7 @@ class Page():
         soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
 
         texts = soup_lower.findAll(text=True)
-        visible_text = filter(self.visible_tags, texts)
+        visible_text = [w for w in filter(self.visible_tags, texts)]
 
         self.process_text(visible_text)
 
@@ -184,7 +187,7 @@ class Page():
         return dict(zip(wordlist, freq))
 
     def sort_freq_dist(self, freqdist, limit=1):
-        aux = [(freqdist[key], Manifest.stem_to_word[key]) for key in freqdist if freqdist[key] >= limit]
+        aux = [(freqdist[key], self.stem_to_word[key]) for key in freqdist if freqdist[key] >= limit]
         aux.sort()
         aux.reverse()
         return aux

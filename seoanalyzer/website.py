@@ -17,7 +17,6 @@ class Website():
         self.wordcount = Counter()
         self.bigrams = Counter()
         self.trigrams = Counter()
-        
 
     def check_dns(self, url_to_check):
         try:

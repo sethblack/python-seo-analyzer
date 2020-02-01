@@ -28,7 +28,7 @@ def analyze(url, sitemap_url=None):
     for w in sorted_words:
         if w[1] > 4:
             output['keywords'].append({
-                'word': site.stem_to_word[w[0]],
+                'word': w[0],
                 'count': w[1],
             })
 
