@@ -72,4 +72,4 @@ class Website():
             self.page_queue.extend(page.links)
 
             self.crawled_pages.append(page)
-            self.crawled_urls.add(url)
+            self.crawled_urls.add(page.url)

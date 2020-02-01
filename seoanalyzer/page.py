@@ -392,14 +392,14 @@ class Page():
 
         if len(relative_path) > 0 and relative_path[0] == '?':
             if '?' in self.url:
-                return '{0}{1}'.format(self.url[:self.url.index('?')], relative_path)
+                return f'{self.url[:self.url.index("?")]}{relative_path}'
 
-            return '{0}{1}'.format(self.url, relative_path)
+            return f'{self.url}{relative_path}'
 
         if len(relative_path) > 0 and relative_path[0] != '/':
-            relative_path = '/{0}'.format(relative_path)
+            relative_path = f'/{relative_path}'
 
-        return '{0}{1}'.format(domain, relative_path)
+        return f'{self.base_domain.scheme}://{domain}{relative_path}'
 
     def warn(self, warning):
         self.warnings.append(warning)
