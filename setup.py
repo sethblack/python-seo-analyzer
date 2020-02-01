@@ -10,8 +10,8 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='pyseoanalyzer',
-    version='3.1.5',
-    description='An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any general SEO related issues.',
+    version='4.0.0',
+    description='An SEO tool that analyzes the structure of a site, crawls the site, count words in the body of the site and warns of any technical SEO issues.',
     author='Seth Black',
     author_email='sblack@sethserver.com',
     url='https://github.com/sethblack/python-seo-analyzer',
@@ -20,7 +20,7 @@ setup(
     package_data={'seoanalyzer': ['templates/index.html',]},
     include_package_data=True,
     install_requires=[
-        'BeautifulSoup4', 'requests', 'jinja2', 'urllib3',
+        'BeautifulSoup4', 'requests', 'jinja2', 'urllib3', 'certifi',
     ],
     entry_points={
         'console_scripts' : [
