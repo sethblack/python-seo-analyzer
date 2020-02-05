@@ -1,9 +1,11 @@
 import re
+import json
 
 from bs4 import BeautifulSoup
 from collections import Counter
 from string import punctuation
 from urllib.parse import urlsplit
+from urllib3.exceptions import HTTPError
 
 from seoanalyzer.http import http
 from seoanalyzer.stemmer import stem
@@ -125,7 +127,7 @@ class Page():
         """
         Analyze the page and populate the warnings list
         """
-        
+
         if not raw_html:
             valid_prefixes = []
 
@@ -142,8 +144,8 @@ class Page():
 
             try:
                 page = http.get(self.url)
-            except requests.exceptions.HTTPError as e:
-                self.warn(f'Returned {page.status_code}')
+            except HTTPError as e:
+                self.warn(f'Returned {e}')
                 return
 
             encoding = 'ascii'
@@ -152,11 +154,12 @@ class Page():
                 encoding = page.headers['content-type'].split('charset=')[-1]
 
             if encoding.lower() not in ('text/html', 'text/plain', 'utf-8'):
-                try:
-                    raw_html = unicode(page.read(), encoding)
-                except:
-                    self.warn(f'Can not read {encoding}')
-                    return
+                # there is no unicode function in Python3
+                # try:
+                #     raw_html = unicode(page.read(), encoding)
+                # except:
+                self.warn(f'Can not read {encoding}')
+                return
             else:
                 raw_html = page.data.decode('utf-8')
 
@@ -232,13 +235,13 @@ class Page():
     def process_text(self, vt):
         page_text = ''
 
-        self.total_word_count = len([e for e in vt if len(e) > 3])
-
         for element in vt:
-            page_text += element.lower() + u' '
+            if element.strip():
+                page_text += element.strip().lower() + u' '
 
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
+        self.total_word_count = len(raw_tokens)
 
         bigrams = self.getngrams(raw_tokens, 2)
 
