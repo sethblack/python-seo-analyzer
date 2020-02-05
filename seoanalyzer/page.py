@@ -1,9 +1,11 @@
 import re
+import json
 
 from bs4 import BeautifulSoup
 from collections import Counter
 from string import punctuation
 from urllib.parse import urlsplit
+from urllib3.exceptions import HTTPError
 
 from seoanalyzer.http import http
 from seoanalyzer.stemmer import stem
@@ -121,43 +123,45 @@ class Page():
         if len(keywords) > 0:
             self.warn(f'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {keywords}')
 
-    def analyze(self):
+    def analyze(self, raw_html=None):
         """
         Analyze the page and populate the warnings list
         """
 
-        valid_prefixes = []
+        if not raw_html:
+            valid_prefixes = []
 
-        # only allow http:// https:// and //
-        for s in ['http://', 'https://', '//',]:
-            valid_prefixes.append(self.url.startswith(s))
+            # only allow http:// https:// and //
+            for s in ['http://', 'https://', '//',]:
+                valid_prefixes.append(self.url.startswith(s))
 
-        if True not in valid_prefixes:
-            self.warn(f'{self.url} does not appear to have a valid protocol.')
-            return
+            if True not in valid_prefixes:
+                self.warn(f'{self.url} does not appear to have a valid protocol.')
+                return
 
-        if self.url.startswith('//'):
-            self.url = f'{self.base_domain.scheme}:{self.url}'
+            if self.url.startswith('//'):
+                self.url = f'{self.base_domain.scheme}:{self.url}'
 
-        try:
-            page = http.get(self.url)
-        except requests.exceptions.HTTPError as e:
-            self.warn(f'Returned {page.status_code}')
-            return
-
-        encoding = 'ascii'
-
-        if 'content-type' in page.headers:
-            encoding = page.headers['content-type'].split('charset=')[-1]
-
-        if encoding.lower() not in ('text/html', 'text/plain', 'utf-8'):
             try:
-                raw_html = unicode(page.read(), encoding)
-            except:
+                page = http.get(self.url)
+            except HTTPError as e:
+                self.warn(f'Returned {e}')
+                return
+
+            encoding = 'ascii'
+
+            if 'content-type' in page.headers:
+                encoding = page.headers['content-type'].split('charset=')[-1]
+
+            if encoding.lower() not in ('text/html', 'text/plain', 'utf-8'):
+                # there is no unicode function in Python3
+                # try:
+                #     raw_html = unicode(page.read(), encoding)
+                # except:
                 self.warn(f'Can not read {encoding}')
                 return
-        else:
-            raw_html = page.data.decode('utf-8')
+            else:
+                raw_html = page.data.decode('utf-8')
 
         # remove comments, they screw with BeautifulSoup
         clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)
@@ -231,13 +235,13 @@ class Page():
     def process_text(self, vt):
         page_text = ''
 
-        self.total_word_count = len([e for e in vt if len(e) > 3])
-
         for element in vt:
-            page_text += element.lower() + u' '
+            if element.strip():
+                page_text += element.strip().lower() + u' '
 
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
+        self.total_word_count = len(raw_tokens)
 
         bigrams = self.getngrams(raw_tokens, 2)
 
