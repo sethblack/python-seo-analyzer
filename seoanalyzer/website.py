@@ -57,6 +57,9 @@ class Website():
 
             page = Page(url=url, base_domain=self.base_url)
 
+            if page.parsed_url.netloc != page.base_domain.netloc:
+                continue
+
             page.analyze()
 
             for w in page.wordcount:

@@ -70,6 +70,7 @@ class Page():
         """
 
         self.base_domain = urlsplit(base_domain)
+        self.parsed_url = urlsplit(url)
         self.url = url
         self.title = ''
         self.description = ''
@@ -141,6 +142,10 @@ class Page():
 
             if self.url.startswith('//'):
                 self.url = f'{self.base_domain.scheme}:{self.url}'
+
+            if self.parsed_url.netloc != self.base_domain.netloc:
+                self.warn(f'{self.url} is not part of {self.base_domain.netloc}.')
+                return
 
             try:
                 page = http.get(self.url)
