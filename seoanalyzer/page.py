@@ -1,5 +1,6 @@
-import re
+import hashlib
 import json
+import re
 
 from bs4 import BeautifulSoup
 from collections import Counter
@@ -86,6 +87,7 @@ class Page():
         self.bigrams = Counter()
         self.trigrams = Counter()
         self.stem_to_word = {}
+        self.content_hash = None
 
     def talk(self):
         """
@@ -102,6 +104,7 @@ class Page():
             'trigrams': self.trigrams,
             'warnings': self.warnings,
             'social': self.social,
+            'content_hash': self.content_hash
         }
 
     def populate(self, bs):
@@ -167,6 +170,8 @@ class Page():
                 return
             else:
                 raw_html = page.data.decode('utf-8')
+
+        self.content_hash = hashlib.sha1(raw_html.encode('utf-8')).hexdigest()
 
         # remove comments, they screw with BeautifulSoup
         clean_html = re.sub(r'<!--.*?-->', r'', raw_html, flags=re.DOTALL)

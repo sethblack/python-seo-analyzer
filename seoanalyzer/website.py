@@ -1,4 +1,5 @@
 from collections import Counter
+from collections import defaultdict
 from urllib.parse import urlsplit
 from xml.dom import minidom
 
@@ -17,6 +18,7 @@ class Website():
         self.wordcount = Counter()
         self.bigrams = Counter()
         self.trigrams = Counter()
+        self.content_hashes = defaultdict(set)
 
     def check_dns(self, url_to_check):
         try:
@@ -61,6 +63,8 @@ class Website():
                 continue
 
             page.analyze()
+
+            self.content_hashes[page.content_hash].add(page.url)
 
             for w in page.wordcount:
                 self.wordcount[w] += page.wordcount[w]

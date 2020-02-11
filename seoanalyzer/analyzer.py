@@ -19,6 +19,8 @@ def analyze(url, sitemap_url=None):
     for p in site.crawled_pages:
         output['pages'].append(p.talk())
 
+    output['duplicate_pages'] = [list(site.content_hashes[p]) for p in site.content_hashes if len(site.content_hashes[p]) > 1]
+
     sorted_words = sorted(site.wordcount.items(), key=itemgetter(1), reverse=True)
     sorted_bigrams = sorted(site.bigrams.items(), key=itemgetter(1), reverse=True)
     sorted_trigrams = sorted(site.trigrams.items(), key=itemgetter(1), reverse=True)
