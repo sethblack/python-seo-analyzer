@@ -78,9 +78,6 @@ class Page():
         self.keywords = {}
         self.warnings = []
         self.translation = bytes.maketrans(punctuation.encode('utf-8'), str(' ' * len(punctuation)).encode('utf-8'))
-        self.social = {
-            'facebook': {'shares': 0, 'comments': 0, 'likes': 0, 'clicks': 0},
-        }
         self.links = []
         self.total_word_count = 0
         self.wordcount = Counter()
@@ -103,7 +100,6 @@ class Page():
             'bigrams': self.bigrams,
             'trigrams': self.trigrams,
             'warnings': self.warnings,
-            'social': self.social,
             'content_hash': self.content_hash
         }
 
@@ -192,7 +188,6 @@ class Page():
         self.analyze_a_tags(soup_unmodified)
         self.analyze_img_tags(soup_lower)
         self.analyze_h1_tags(soup_lower)
-        self.social_shares()
 
         return True
 
@@ -205,33 +200,6 @@ class Page():
         aux.sort()
         aux.reverse()
         return aux
-
-    def social_shares(self):
-        fb_share_count = 0
-        fb_comment_count = 0
-        fb_like_count = 0
-        fb_click_count = 0
-
-        try:
-            page = self.session.get(
-                'https://graph.facebook.com/?fields=og_object{{likes.limit(0).summary(true)}},share&id={}'.format(
-                    self.url))
-            fb_data = json.loads(page.text)
-            fb_share_count = fb_data['share']['share_count']
-            fb_comment_count = fb_data['share']['comment_count']
-            fb_like_count = fb_data['og_object']['likes']['summary']['total_count']
-            # fb_reaction_count = fb_data['engagement']['reaction_count']
-        except:
-            pass
-
-        self.social['facebook'] = {
-            'shares': fb_share_count,
-            'comments': fb_comment_count,
-            'likes': fb_like_count,
-            'clicks': fb_click_count,
-        }
-
-        su_views = 0
 
     def raw_tokenize(self, rawtext):
         return TOKEN_REGEX.findall(rawtext.lower())

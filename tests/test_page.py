@@ -13,9 +13,6 @@ def test_page_init():
     assert p.description == ''
     assert p.keywords == {}
     assert p.warnings == []
-    assert p.social == {
-        'facebook': {'shares': 0, 'comments': 0, 'likes': 0, 'clicks': 0},
-    }
     assert p.links == []
 
 def test_analyze():
