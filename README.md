@@ -1,7 +1,7 @@
 Python SEO Analyzer
 ===================
 
-[![Googling Google by taleas.com](https://www.taleas.com/static/images/comics/NeverDoThis.png "Googling Google by taleas.com")](https://www.taleas.com/comics/googling-google.html)
+[![Googling Google by taleas.com](https://www.taleas.com/static/images/comics/googling-google.jpg "Googling Google by taleas.com")](https://www.taleas.com/comics/googling-google.html)
 
 An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any technical SEO issues.
 
