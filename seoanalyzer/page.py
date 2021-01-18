@@ -368,8 +368,13 @@ class Page():
 
             url_filename, url_file_extension = os.path.splitext(modified_url)
 
+            # ignore links to images
             if url_file_extension in IMAGE_EXTENSIONS:
                 continue
+
+            # remove hash links to all urls
+            if '#' in modified_url:
+                modified_url = modified_url[:modified_url.rindex('#')]
 
             self.links.append(modified_url)
 
