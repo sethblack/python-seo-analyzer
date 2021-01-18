@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import re
 
 from bs4 import BeautifulSoup
@@ -58,6 +59,8 @@ ENGLISH_STOP_WORDS = frozenset([
     "yourselves"])
 
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
+
+IMAGE_EXTENSIONS = set(['.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg',])
 
 
 class Page():
@@ -362,6 +365,11 @@ class Page():
                 continue
 
             modified_url = self.rel_to_abs_url(tag_href)
+
+            url_filename, url_file_extension = os.path.splitext(modified_url)
+
+            if url_file_extension in IMAGE_EXTENSIONS:
+                continue
 
             self.links.append(modified_url)
 
