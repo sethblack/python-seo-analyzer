@@ -51,7 +51,7 @@ class Website():
                 for url in sitemap_urls:
                     self.page_queue.append(self.get_text_from_xml(url.childNodes))
             elif self.sitemap.endswith('txt'):
-                sitemap_urls = page.split('\n')
+                sitemap_urls = page.data.decode('utf-8').split('\n')
                 for url in sitemap_urls:
                     self.page_queue.append(url)
 
