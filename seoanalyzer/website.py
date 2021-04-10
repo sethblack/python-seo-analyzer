@@ -45,11 +45,15 @@ class Website():
     def crawl(self):
         if self.sitemap:
             page = http.get(self.sitemap)
-            xmldoc = minidom.parseString(page.data.decode('utf-8'))
-            sitemap_urls = xmldoc.getElementsByTagName('loc')
-
-            for url in sitemap_urls:
-                self.page_queue.append(self.get_text_from_xml(url.childNodes))
+            if self.sitemap.endswith('xml'):
+                xmldoc = minidom.parseString(page.data.decode('utf-8'))
+                sitemap_urls = xmldoc.getElementsByTagName('loc')
+                for url in sitemap_urls:
+                    self.page_queue.append(self.get_text_from_xml(url.childNodes))
+            elif self.sitemap.endswith('txt'):
+                sitemap_urls = page.split('\n')
+                for url in sitemap_urls:
+                    self.page_queue.append(url)
 
         self.page_queue.append(self.base_url)
 
