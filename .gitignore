@@ -1,3 +1,9 @@
+# I don't want the python virtual env in github!
+venv
+
+# nor visual
+.vscode
+
 *.py[cod]
 
 # C extensions
