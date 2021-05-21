@@ -16,6 +16,12 @@ Installation
 pip3 install pyseoanalyzer
 ```
 
+### Docker
+
+```
+docker run sethblack/python-seo-analyzer [ARGS ...]
+```
+
 Command-line Usage
 ------------------
 
