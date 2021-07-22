@@ -60,7 +60,7 @@ ENGLISH_STOP_WORDS = frozenset([
 
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
 
-IMAGE_EXTENSIONS = set(['.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg',])
+IMAGE_EXTENSIONS = set(['.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.webp', '.avif',])
 
 
 class Page():
