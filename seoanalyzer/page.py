@@ -96,6 +96,8 @@ class Page():
         self.base_domain = urlsplit(base_domain)
         self.parsed_url = urlsplit(url)
         self.url = url
+        self.analyze_headings = analyze_headings
+        self.analyze_extra_tags = analyze_extra_tags
         self.title = ''
         self.description = ''
         self.keywords = {}
