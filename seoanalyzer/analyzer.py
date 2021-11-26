@@ -4,7 +4,7 @@ import time
 from operator import itemgetter
 from seoanalyzer.website import Website
 
-def analyze(url, sitemap_url=None):
+def analyze(url, sitemap_url=None, analyze_headings=False, analyze_extra_tags=False):
     start_time = time.time()
 
     def calc_total_time():
@@ -12,7 +12,7 @@ def analyze(url, sitemap_url=None):
 
     output = {'pages': [], 'keywords': [], 'errors': [], 'total_time': calc_total_time()}
 
-    site = Website(url, sitemap_url)
+    site = Website(url, sitemap_url, analyze_headings, analyze_extra_tags)
 
     site.crawl()
 

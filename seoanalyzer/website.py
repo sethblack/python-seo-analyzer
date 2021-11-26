@@ -9,9 +9,11 @@ from seoanalyzer.http import http
 from seoanalyzer.page import Page
 
 class Website():
-    def __init__(self, base_url, sitemap):
+    def __init__(self, base_url, sitemap, analyze_headings, analyze_extra_tags):
         self.base_url = base_url
         self.sitemap = sitemap
+        self.analyze_headings = analyze_headings
+        self.analyze_extra_tags = analyze_extra_tags
         self.crawled_pages = []
         self.crawled_urls = set([])
         self.page_queue = []
@@ -61,7 +63,9 @@ class Website():
             if url in self.crawled_urls:
                 continue
 
-            page = Page(url=url, base_domain=self.base_url)
+            page = Page(url=url, base_domain=self.base_url,
+                        analyze_headings=self.analyze_headings,
+                        analyze_extra_tags=self.analyze_extra_tags)
 
             if page.parsed_url.netloc != page.base_domain.netloc:
                 continue

@@ -5,6 +5,7 @@ import re
 
 from bs4 import BeautifulSoup
 from collections import Counter
+import lxml.html as lh
 from string import punctuation
 from urllib.parse import urlsplit
 from urllib3.exceptions import HTTPError
@@ -60,6 +61,25 @@ ENGLISH_STOP_WORDS = frozenset([
 
 TOKEN_REGEX = re.compile(r'(?u)\b\w\w+\b')
 
+HEADING_TAGS_XPATHS = {
+    'h1': '//h1',
+    'h2': '//h2',
+    'h3': '//h3',
+    'h4': '//h4',
+    'h5': '//h5',
+    'h6': '//h6',
+}
+
+ADDITIONAL_TAGS_XPATHS = {
+    'title': '//title/text()',
+    'meta_desc': '//meta[@name="description"]/@content',
+    'viewport': '//meta[@name="viewport"]/@content',
+    'charset': '//meta[@charset]/@charset',
+    'canonical': '//link[@rel="canonical"]/@href',
+    'alt_href': '//link[@rel="alternate"]/@href',
+    'alt_hreflang': '//link[@rel="alternate"]/@hreflang',
+}
+
 IMAGE_EXTENSIONS = set(['.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.webp', '.avif',])
 
 
@@ -68,7 +88,7 @@ class Page():
     Container for each page and the core analyzer.
     """
 
-    def __init__(self, url='', base_domain=''):
+    def __init__(self, url='', base_domain='', analyze_headings=False, analyze_extra_tags=False):
         """
         Variables go here, *not* outside of __init__
         """
@@ -89,12 +109,17 @@ class Page():
         self.stem_to_word = {}
         self.content_hash = None
 
+        if analyze_headings:
+            self.headings = {}
+        if analyze_extra_tags:
+            self.additional_info = {}
+
     def talk(self):
         """
         Returns a dictionary that can be printed
         """
 
-        return {
+        context = {
             'url': self.url,
             'title': self.title,
             'description': self.description,
@@ -105,6 +130,13 @@ class Page():
             'warnings': self.warnings,
             'content_hash': self.content_hash
         }
+
+        if self.analyze_headings:
+            context['headings'] = self.headings
+        if self.analyze_extra_tags:
+            context['additional_info'] = self.additional_info
+
+        return context
 
     def populate(self, bs):
         """
@@ -125,6 +157,28 @@ class Page():
 
         if len(keywords) > 0:
             self.warn(f'Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {keywords}')
+
+    def analyze_heading_tags(self, bs):
+        """
+        Analyze the heading tags and populate the headings
+        """
+
+        dom = lh.fromstring(str(bs))
+        for tag, xpath in HEADING_TAGS_XPATHS.items():
+            value = [heading.text_content() for heading in dom.xpath(xpath)]
+            if value:
+                self.headings.update({tag: value})
+
+    def analyze_additional_tags(self, bs):
+        """
+        Analyze additional tags and populate the additional info
+        """
+
+        dom = lh.fromstring(str(bs))
+        for tag, xpath in ADDITIONAL_TAGS_XPATHS.items():
+            value = dom.xpath(xpath)
+            if value:
+                self.additional_info.update({tag: value})
 
     def analyze(self, raw_html=None):
         """
@@ -191,6 +245,11 @@ class Page():
         self.analyze_a_tags(soup_unmodified)
         self.analyze_img_tags(soup_lower)
         self.analyze_h1_tags(soup_lower)
+
+        if self.analyze_headings:
+            self.analyze_heading_tags(soup_unmodified)
+        if self.analyze_extra_tags:
+            self.analyze_additional_tags(soup_unmodified)
 
         return True
 
