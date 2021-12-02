@@ -56,11 +56,21 @@ output = analyze(site, sitemap)
 print(output)
 ```
 
-If you would like to analyze heading tags (h1-h6) and other extra additional tags as well, then pass the following options to the `analyze` function
+In order to analyze heading tags (h1-h6) and other extra additional tags as well, the following options can be passed to the `analyze` function
 ```python
 from seoanalyzer import analyze
 
 output = analyze(site, sitemap, analyze_headings=True, analyze_extra_tags=True)
+
+print(output)
+```
+
+By default, the `analyze` function analyzes all the existing inner links as well, which might be time consuming.
+This default behaviour can be changed to analyze only the provided URL by passing the following option to the `analyze` function
+```python
+from seoanalyzer import analyze
+
+output = analyze(site, sitemap, follow_links=False)
 
 print(output)
 ```
