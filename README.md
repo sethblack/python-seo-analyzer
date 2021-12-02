@@ -56,6 +56,15 @@ output = analyze(site, sitemap)
 print(output)
 ```
 
+If you would like to analyze heading tags (h1-h6) and other extra additional tags as well, then pass the following options to the `analyze` function
+```python
+from seoanalyzer import analyze
+
+output = analyze(site, sitemap, analyze_headings=True, analyze_extra_tags=True)
+
+print(output)
+```
+
 Alternatively, you can run the analysis as a script from the seoanalyzer folder.
 
 ```sh

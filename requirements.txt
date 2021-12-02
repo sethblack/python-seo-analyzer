@@ -1,5 +1,6 @@
 beautifulsoup4==4.6.0
 requests==2.20.0
 Jinja2==2.11.3
+lxml==4.6.4
 urllib3==1.26.5
 certifi==2018.11.29
