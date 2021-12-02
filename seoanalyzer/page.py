@@ -165,7 +165,10 @@ class Page():
         Analyze the heading tags and populate the headings
         """
 
-        dom = lh.fromstring(str(bs))
+        try:
+            dom = lh.fromstring(str(bs))
+        except ValueError as _:
+            dom = lh.fromstring(bs.encode('utf-8'))
         for tag, xpath in HEADING_TAGS_XPATHS.items():
             value = [heading.text_content() for heading in dom.xpath(xpath)]
             if value:
@@ -176,7 +179,10 @@ class Page():
         Analyze additional tags and populate the additional info
         """
 
-        dom = lh.fromstring(str(bs))
+        try:
+            dom = lh.fromstring(str(bs))
+        except ValueError as _:
+            dom = lh.fromstring(bs.encode('utf-8'))
         for tag, xpath in ADDITIONAL_TAGS_XPATHS.items():
             value = dom.xpath(xpath)
             if value:
