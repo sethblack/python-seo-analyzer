@@ -1,10 +1,14 @@
 import json
+import os
 import time
-
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
 from operator import itemgetter
 from seoanalyzer.website import Website
 
-def analyze(url, sitemap_url=None, analyze_headings=False, analyze_extra_tags=False, follow_links=True):
+
+def analyze(url, sitemap_url=None, analyze_headings=False, analyze_extra_tags=False, follow_links=True,
+            out_type='json'):
     start_time = time.time()
 
     def calc_total_time():
@@ -19,7 +23,8 @@ def analyze(url, sitemap_url=None, analyze_headings=False, analyze_extra_tags=Fa
     for p in site.crawled_pages:
         output['pages'].append(p.talk())
 
-    output['duplicate_pages'] = [list(site.content_hashes[p]) for p in site.content_hashes if len(site.content_hashes[p]) > 1]
+    output['duplicate_pages'] = [list(site.content_hashes[p]) for p in site.content_hashes if
+                                 len(site.content_hashes[p]) > 1]
 
     sorted_words = sorted(site.wordcount.items(), key=itemgetter(1), reverse=True)
     sorted_bigrams = sorted(site.bigrams.items(), key=itemgetter(1), reverse=True)
@@ -50,7 +55,12 @@ def analyze(url, sitemap_url=None, analyze_headings=False, analyze_extra_tags=Fa
 
     # Sort one last time...
     output['keywords'] = sorted(output['keywords'], key=itemgetter('count'), reverse=True)
-
     output['total_time'] = calc_total_time()
-
-    return output
+    if out_type != "json":
+        module_path = os.path.dirname(__file__)
+        env = Environment(loader=FileSystemLoader(os.path.join(module_path, 'templates')))
+        template = env.get_template('index.html')
+        output_from_parsed_template = template.render(result=output)
+        return output_from_parsed_template
+    else:
+        return output
