@@ -78,6 +78,10 @@ ADDITIONAL_TAGS_XPATHS = {
     'canonical': '//link[@rel="canonical"]/@href',
     'alt_href': '//link[@rel="alternate"]/@href',
     'alt_hreflang': '//link[@rel="alternate"]/@hreflang',
+    'og_title': '//meta[@property="og:title"]/@content',
+    'og_desc': '//meta[@property="og:description"]/@content',
+    'og_url': '//meta[@property="og:url"]/@content',
+    'og_image': '//meta[@property="og:image"]/@content'
 }
 
 IMAGE_EXTENSIONS = set(['.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.webp', '.avif',])
