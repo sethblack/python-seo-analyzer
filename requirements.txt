@@ -1,5 +1,5 @@
 beautifulsoup4==4.6.0
-requests==2.20.0
+requests==2.31.0
 Jinja2==2.11.3
 lxml==4.9.1
 urllib3==1.26.5
