@@ -243,8 +243,9 @@ class Page():
 
         soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser') #.encode('utf-8')
         soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
+        page_text = trafilatura.extract(clean_html)
 
-        self.process_text(clean_html)
+        self.process_text(page_text)
 
         self.populate(soup_lower)
 
@@ -281,9 +282,7 @@ class Page():
     def getngrams(self, D, n=2):
         return zip(*[D[i:] for i in range(n)])
 
-    def process_text(self, clean_html):
-        page_text = trafilatura.extract(clean_html)
-
+    def process_text(self, page_text):
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
         self.total_word_count = len(raw_tokens)
@@ -303,7 +302,7 @@ class Page():
         freq_dist = self.word_list_freq_dist(tokens)
 
         for word in freq_dist:
-            root = stem(word)
+            root = word
             cnt = freq_dist[word]
 
             if root not in self.stem_to_word:
