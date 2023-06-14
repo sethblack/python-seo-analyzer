@@ -1,5 +1,4 @@
 import hashlib
-import json
 import os
 import re
 
@@ -12,6 +11,7 @@ from urllib3.exceptions import HTTPError
 
 from seoanalyzer.http import http
 from seoanalyzer.stemmer import stem
+import trafilatura
 
 # This list of English stop words is taken from the "Glasgow Information
 # Retrieval Group". The original list can be found at
@@ -84,7 +84,7 @@ ADDITIONAL_TAGS_XPATHS = {
     'og_image': '//meta[@property="og:image"]/@content'
 }
 
-IMAGE_EXTENSIONS = set(['.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.webp', '.avif',])
+IMAGE_EXTENSIONS = {'.img', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.webp', '.avif'}
 
 
 class Page():
@@ -244,10 +244,7 @@ class Page():
         soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser') #.encode('utf-8')
         soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
 
-        texts = soup_lower.findAll(text=True)
-        visible_text = [w for w in filter(self.visible_tags, texts)]
-
-        self.process_text(visible_text)
+        self.process_text(clean_html)
 
         self.populate(soup_lower)
 
@@ -284,12 +281,8 @@ class Page():
     def getngrams(self, D, n=2):
         return zip(*[D[i:] for i in range(n)])
 
-    def process_text(self, vt):
-        page_text = ''
-
-        for element in vt:
-            if element.strip():
-                page_text += element.strip().lower() + u' '
+    def process_text(self, clean_html):
+        page_text = trafilatura.extract(clean_html)
 
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
