@@ -10,8 +10,6 @@ from urllib.parse import urlsplit
 from urllib3.exceptions import HTTPError
 
 from seoanalyzer.http import http
-from seoanalyzer.stemmer import stem
-import trafilatura
 
 # This list of English stop words is taken from the "Glasgow Information
 # Retrieval Group". The original list can be found at
@@ -115,6 +113,9 @@ class Page():
         self.stem_to_word = {}
         self.content_hash = None
 
+        self.raw = None
+        self.text = None
+
         if analyze_headings:
             self.headings = {}
         if analyze_extra_tags:
@@ -127,14 +128,16 @@ class Page():
 
         context = {
             'url': self.url,
+            'raw': self.raw,
+            'text': self.text,
             'title': self.title,
             'description': self.description,
             'word_count': self.total_word_count,
-            'keywords': self.sort_freq_dist(self.keywords, limit=5),
+            'keywords': self.sort_freq_dist(self.keywords, limit=3),
             'bigrams': self.bigrams,
             'trigrams': self.trigrams,
             'warnings': self.warnings,
-            'content_hash': self.content_hash
+            'content_hash': self.content_hash,
         }
 
         if self.analyze_headings:
@@ -236,6 +239,7 @@ class Page():
             else:
                 raw_html = page.data.decode('utf-8')
 
+        self.raw = raw_html
         self.content_hash = hashlib.sha1(raw_html.encode('utf-8')).hexdigest()
 
         # remove comments, they screw with BeautifulSoup
@@ -243,9 +247,14 @@ class Page():
 
         soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser') #.encode('utf-8')
         soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
-        page_text = trafilatura.extract(clean_html)
 
-        self.process_text(page_text)
+        full_text = soup_lower.body.findAll(text=True)
+        full_text = [w.strip() for w in filter(self.visible_tags, full_text) if len(w.strip())]
+        full_text = u' '.join(full_text)
+
+        self.text = full_text
+
+        self.process_text(full_text)
 
         self.populate(soup_lower)
 
