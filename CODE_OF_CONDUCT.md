@@ -1,5 +1,7 @@
 # Contributor Covenant Code of Conduct
 
+Modified for: Bizrevue
+
 ## Our Pledge
 
 In the interest of fostering an open and welcoming environment, we as
