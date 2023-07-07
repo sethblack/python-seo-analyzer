@@ -10,7 +10,6 @@ from urllib.parse import urlsplit
 from urllib3.exceptions import HTTPError
 
 from seoanalyzer.http import http
-from seoanalyzer.stemmer import stem
 import trafilatura
 
 # This list of English stop words is taken from the "Glasgow Information
@@ -113,6 +112,8 @@ class Page():
         self.bigrams = Counter()
         self.trigrams = Counter()
         self.stem_to_word = {}
+        self.raw = None
+        self.content = None
         self.content_hash = None
 
         if analyze_headings:
@@ -127,6 +128,7 @@ class Page():
 
         context = {
             'url': self.url,
+            'raw' : self.raw,
             'title': self.title,
             'description': self.description,
             'word_count': self.total_word_count,
@@ -134,7 +136,8 @@ class Page():
             'bigrams': self.bigrams,
             'trigrams': self.trigrams,
             'warnings': self.warnings,
-            'content_hash': self.content_hash
+            'content': self.content,
+            'content_hash': self.content_hash,
         }
 
         if self.analyze_headings:
@@ -236,6 +239,7 @@ class Page():
             else:
                 raw_html = page.data.decode('utf-8')
 
+        self.raw = raw_html
         self.content_hash = hashlib.sha1(raw_html.encode('utf-8')).hexdigest()
 
         # remove comments, they screw with BeautifulSoup
@@ -243,10 +247,19 @@ class Page():
 
         soup_lower = BeautifulSoup(clean_html.lower(), 'html.parser') #.encode('utf-8')
         soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
-        page_text = trafilatura.extract(clean_html)
 
-        self.process_text(page_text)
+        content = trafilatura.extract(
+            clean_html,
+            include_links = True,
+            include_formatting = True,
+            include_tables = True,
+            include_images = True,
+            output_format = 'json'
+        )
 
+        self.content = content
+
+        self.process_text(content['text'])
         self.populate(soup_lower)
 
         self.analyze_title()
