@@ -249,7 +249,7 @@ class Page():
         soup_unmodified = BeautifulSoup(clean_html, 'html.parser') #.encode('utf-8')
 
         content = trafilatura.extract(
-            clean_html,
+            raw_html,
             include_links = True,
             include_formatting = True,
             include_tables = True,
@@ -264,7 +264,7 @@ class Page():
 
         self.content = content
 
-        self.process_text(content['text'])
+        self.process_text(content['text'].lower())
         self.populate(soup_lower)
 
         self.analyze_title()
