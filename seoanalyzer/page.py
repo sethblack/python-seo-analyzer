@@ -251,9 +251,9 @@ class Page():
         content = trafilatura.extract(
             raw_html,
             include_links = False,
-            include_formatting = False,
-            include_tables = False,
-            include_images = False,
+            include_formatting = True,
+            include_tables = True,
+            include_images = True,
             output_format = 'json'
         )
 
