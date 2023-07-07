@@ -1,10 +1,8 @@
-import asyncio
 import hashlib
 import json
 import os
 import re
 
-import aiohttp
 from bs4 import BeautifulSoup
 from collections import Counter
 import lxml.html as lh
@@ -197,7 +195,7 @@ class Page():
             if value:
                 self.additional_info.update({tag: value})
 
-    async def analyze(self, raw_html=None):
+    def analyze(self, raw_html=None):
         """
         Analyze the page and populate the warnings list
         """
@@ -221,10 +219,8 @@ class Page():
                 return
 
             try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(self.url, verify_ssl=False) as response:
-                        page = await response.text()
-            except (aiohttp.ClientError, asyncio.TimeoutError, UnicodeDecodeError) as e:
+                page = http.get(self.url)
+            except HTTPError as e:
                 self.warn(f'Returned {e}')
                 return
 
