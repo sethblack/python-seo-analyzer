@@ -252,7 +252,7 @@ class Page():
             raw_html,
             include_links = False,
             include_formatting = False,
-            include_tables = True,
+            include_tables = False,
             include_images = False,
             output_format = 'json'
         )
