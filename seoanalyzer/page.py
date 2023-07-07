@@ -128,7 +128,6 @@ class Page():
 
         context = {
             'url': self.url,
-            'raw' : self.raw,
             'title': self.title,
             'description': self.description,
             'word_count': self.total_word_count,
