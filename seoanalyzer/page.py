@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import re
 
@@ -255,6 +256,11 @@ class Page():
             include_images = True,
             output_format = 'json'
         )
+
+        content = json.loads(content) if content else None
+
+        if content is None:
+            return
 
         self.content = content
 
