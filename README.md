@@ -80,13 +80,3 @@ Alternatively, you can run the analysis as a script from the seoanalyzer folder.
 ```sh
 python analyzer.py https://www.sethserver.com/ -f html > results.html
 ```
-
-Notes
------
-
-If you get `requests.exceptions.SSLError` at either the command-line or via the python-API, try using:
- - http://www.foo.bar
- 
- **instead** of..
- 
- -  https://www.foo.bar
