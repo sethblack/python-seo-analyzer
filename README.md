@@ -1,11 +1,11 @@
 Python SEO Analyzer
 ===================
 
-[![Googling Google by taleas.com](https://www.taleas.com/static/images/comics/NeverDoThis.png "Googling Google by taleas.com")](https://www.taleas.com/comics/googling-google.html)
+[![Googling Google by taleas.com](https://www.taleas.com/static/images/comics/googling-google.jpg "Googling Google by taleas.com")](https://www.taleas.com/comics/googling-google.html)
 
-An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any general SEO related issues.
+An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any technical SEO issues.
 
-Requires Python 3.4+, BeautifulSoup4 and urllib3.
+Requires Python 3.6+, BeautifulSoup4 and urllib3.
 
 Installation
 ------------
@@ -14,6 +14,12 @@ Installation
 
 ```
 pip3 install pyseoanalyzer
+```
+
+### Docker
+
+```
+docker run sethblack/python-seo-analyzer [ARGS ...]
 ```
 
 Command-line Usage
@@ -46,6 +52,25 @@ The `analyze` function returns a dictionary with the results of the crawl.
 from seoanalyzer import analyze
 
 output = analyze(site, sitemap)
+
+print(output)
+```
+
+In order to analyze heading tags (h1-h6) and other extra additional tags as well, the following options can be passed to the `analyze` function
+```python
+from seoanalyzer import analyze
+
+output = analyze(site, sitemap, analyze_headings=True, analyze_extra_tags=True)
+
+print(output)
+```
+
+By default, the `analyze` function analyzes all the existing inner links as well, which might be time consuming.
+This default behaviour can be changed to analyze only the provided URL by passing the following option to the `analyze` function
+```python
+from seoanalyzer import analyze
+
+output = analyze(site, sitemap, follow_links=False)
 
 print(output)
 ```

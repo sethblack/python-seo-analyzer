@@ -21,9 +21,13 @@ def main(args=None):
         arg_parser.add_argument('-f', '--output-format', help='Output format.', choices=['json', 'html', ],
                                 default='json')
 
+        arg_parser.add_argument('--analyze-headings', default=False, action='store_true', help='Analyze heading tags (h1-h6).')
+        arg_parser.add_argument('--analyze-extra-tags', default=False, action='store_true', help='Analyze other extra additional tags.')
+        arg_parser.add_argument('--no-follow-links', default=True, action='store_false', help='Analyze all the existing inner links as well (might be time consuming).')
+
         args = arg_parser.parse_args()
 
-        output = analyze(args.site, args.sitemap)
+        output = analyze(args.site, args.sitemap, analyze_headings=args.analyze_headings, analyze_extra_tags=args.analyze_extra_tags, follow_links=args.no_follow_links)
 
         if args.output_format == 'html':
             from jinja2 import Environment
