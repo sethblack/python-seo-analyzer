@@ -1,8 +1,9 @@
 import time
-
 from operator import itemgetter
 from .website import Website
 
+def calc_total_time(start_time):
+    return time.time() - start_time
 
 def analyze(
     url,
@@ -13,14 +14,11 @@ def analyze(
 ):
     start_time = time.time()
 
-    def calc_total_time():
-        return time.time() - start_time
-
     output = {
         "pages": [],
         "keywords": [],
         "errors": [],
-        "total_time": calc_total_time(),
+        "total_time": 0,  # Initialize to 0 before calculation
     }
 
     site = Website(
@@ -80,6 +78,6 @@ def analyze(
         output["keywords"], key=itemgetter("count"), reverse=True
     )
 
-    output["total_time"] = calc_total_time()
+    output["total_time"] = calc_total_time(start_time)
 
     return output
