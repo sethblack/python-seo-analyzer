@@ -5,11 +5,14 @@ from xml.dom import minidom
 
 import socket
 
-from seoanalyzer.http import http
-from seoanalyzer.page import Page
+from .http import http
+from .page import Page
 
-class Website():
-    def __init__(self, base_url, sitemap, analyze_headings, analyze_extra_tags, follow_links):
+
+class Website:
+    def __init__(
+        self, base_url, sitemap, analyze_headings, analyze_extra_tags, follow_links
+    ):
         self.base_url = base_url
         self.sitemap = sitemap
         self.analyze_headings = analyze_headings
@@ -43,18 +46,18 @@ class Website():
             if node.nodeType == node.TEXT_NODE:
                 rc.append(node.data)
 
-        return ''.join(rc)
+        return "".join(rc)
 
     def crawl(self):
         if self.sitemap:
             page = http.get(self.sitemap)
-            if self.sitemap.endswith('xml'):
-                xmldoc = minidom.parseString(page.data.decode('utf-8'))
-                sitemap_urls = xmldoc.getElementsByTagName('loc')
+            if self.sitemap.endswith("xml"):
+                xmldoc = minidom.parseString(page.data.decode("utf-8"))
+                sitemap_urls = xmldoc.getElementsByTagName("loc")
                 for url in sitemap_urls:
                     self.page_queue.append(self.get_text_from_xml(url.childNodes))
-            elif self.sitemap.endswith('txt'):
-                sitemap_urls = page.data.decode('utf-8').split('\n')
+            elif self.sitemap.endswith("txt"):
+                sitemap_urls = page.data.decode("utf-8").split("\n")
                 for url in sitemap_urls:
                     self.page_queue.append(url)
 
@@ -64,9 +67,12 @@ class Website():
             if url in self.crawled_urls:
                 continue
 
-            page = Page(url=url, base_domain=self.base_url,
-                        analyze_headings=self.analyze_headings,
-                        analyze_extra_tags=self.analyze_extra_tags)
+            page = Page(
+                url=url,
+                base_domain=self.base_url,
+                analyze_headings=self.analyze_headings,
+                analyze_extra_tags=self.analyze_extra_tags,
+            )
 
             if page.parsed_url.netloc != page.base_domain.netloc:
                 continue

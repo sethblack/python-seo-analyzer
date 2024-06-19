@@ -78,7 +78,7 @@ print(output)
 Alternatively, you can run the analysis as a script from the seoanalyzer folder.
 
 ```sh
-python analyzer.py https://www.sethserver.com/ -f html > results.html
+python -m seoanalyzer https://www.sethserver.com/ -f html > results.html
 ```
 
 Notes
