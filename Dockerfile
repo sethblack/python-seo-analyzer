@@ -5,15 +5,13 @@ RUN apt-get update -y && apt-get upgrade -y
 RUN pip3 install --upgrade pip
 RUN pip3 install uv
 
-COPY ./requirements.txt /app/
+COPY ./requirements.txt /python-seo-analyzer/
 
-RUN uv pip install --system --verbose --requirement /app/requirements.txt
+RUN uv pip install --system --verbose --requirement /python-seo-analyzer/requirements.txt
 RUN uv cache clean --verbose
 
-WORKDIR /app
+COPY . /python-seo-analyzer
 
-COPY . /app
-
-RUN python3 setup.py install
+RUN python3 -m pip install /python-seo-analyzer
 
 ENTRYPOINT ["/usr/local/bin/seoanalyze"]
