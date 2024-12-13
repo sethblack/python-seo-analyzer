@@ -1,7 +1,9 @@
 import hashlib
+import json
 import lxml.html as lh
 import os
 import re
+import trafilatura
 
 from bs4 import BeautifulSoup
 from collections import Counter
@@ -11,330 +13,7 @@ from urllib3.exceptions import HTTPError
 
 from .http import http
 from .stemmer import stem
-
-# This list of English stop words is taken from the "Glasgow Information
-# Retrieval Group". The original list can be found at
-# http://ir.dcs.gla.ac.uk/resources/linguistic_utils/stop_words
-ENGLISH_STOP_WORDS = frozenset(
-    [
-        "a",
-        "about",
-        "above",
-        "across",
-        "after",
-        "afterwards",
-        "again",
-        "against",
-        "all",
-        "almost",
-        "alone",
-        "along",
-        "already",
-        "also",
-        "although",
-        "always",
-        "am",
-        "among",
-        "amongst",
-        "amoungst",
-        "amount",
-        "an",
-        "and",
-        "another",
-        "any",
-        "anyhow",
-        "anyone",
-        "anything",
-        "anyway",
-        "anywhere",
-        "are",
-        "around",
-        "as",
-        "at",
-        "back",
-        "be",
-        "became",
-        "because",
-        "become",
-        "becomes",
-        "becoming",
-        "been",
-        "before",
-        "beforehand",
-        "behind",
-        "being",
-        "below",
-        "beside",
-        "besides",
-        "between",
-        "beyond",
-        "bill",
-        "both",
-        "bottom",
-        "but",
-        "by",
-        "call",
-        "can",
-        "cannot",
-        "cant",
-        "co",
-        "con",
-        "could",
-        "couldnt",
-        "cry",
-        "de",
-        "describe",
-        "detail",
-        "do",
-        "done",
-        "down",
-        "due",
-        "during",
-        "each",
-        "eg",
-        "eight",
-        "either",
-        "eleven",
-        "else",
-        "elsewhere",
-        "empty",
-        "enough",
-        "etc",
-        "even",
-        "ever",
-        "every",
-        "everyone",
-        "everything",
-        "everywhere",
-        "except",
-        "few",
-        "fifteen",
-        "fify",
-        "fill",
-        "find",
-        "fire",
-        "first",
-        "five",
-        "for",
-        "former",
-        "formerly",
-        "forty",
-        "found",
-        "four",
-        "from",
-        "front",
-        "full",
-        "further",
-        "get",
-        "give",
-        "go",
-        "had",
-        "has",
-        "hasnt",
-        "have",
-        "he",
-        "hence",
-        "her",
-        "here",
-        "hereafter",
-        "hereby",
-        "herein",
-        "hereupon",
-        "hers",
-        "herself",
-        "him",
-        "himself",
-        "his",
-        "how",
-        "however",
-        "hundred",
-        "i",
-        "ie",
-        "if",
-        "in",
-        "inc",
-        "indeed",
-        "interest",
-        "into",
-        "is",
-        "it",
-        "its",
-        "itself",
-        "keep",
-        "last",
-        "latter",
-        "latterly",
-        "least",
-        "less",
-        "ltd",
-        "made",
-        "many",
-        "may",
-        "me",
-        "meanwhile",
-        "might",
-        "mill",
-        "mine",
-        "more",
-        "moreover",
-        "most",
-        "mostly",
-        "move",
-        "much",
-        "must",
-        "my",
-        "myself",
-        "name",
-        "namely",
-        "neither",
-        "never",
-        "nevertheless",
-        "next",
-        "nine",
-        "no",
-        "nobody",
-        "none",
-        "noone",
-        "nor",
-        "not",
-        "nothing",
-        "now",
-        "nowhere",
-        "of",
-        "off",
-        "often",
-        "on",
-        "once",
-        "one",
-        "only",
-        "onto",
-        "or",
-        "other",
-        "others",
-        "otherwise",
-        "our",
-        "ours",
-        "ourselves",
-        "out",
-        "over",
-        "own",
-        "part",
-        "per",
-        "perhaps",
-        "please",
-        "put",
-        "rather",
-        "re",
-        "same",
-        "see",
-        "seem",
-        "seemed",
-        "seeming",
-        "seems",
-        "serious",
-        "several",
-        "she",
-        "should",
-        "show",
-        "side",
-        "since",
-        "sincere",
-        "six",
-        "sixty",
-        "so",
-        "some",
-        "somehow",
-        "someone",
-        "something",
-        "sometime",
-        "sometimes",
-        "somewhere",
-        "still",
-        "such",
-        "system",
-        "take",
-        "ten",
-        "than",
-        "that",
-        "the",
-        "their",
-        "them",
-        "themselves",
-        "then",
-        "thence",
-        "there",
-        "thereafter",
-        "thereby",
-        "therefore",
-        "therein",
-        "thereupon",
-        "these",
-        "they",
-        "third",
-        "this",
-        "those",
-        "though",
-        "three",
-        "through",
-        "throughout",
-        "thru",
-        "thus",
-        "to",
-        "together",
-        "too",
-        "top",
-        "toward",
-        "towards",
-        "twelve",
-        "twenty",
-        "two",
-        "un",
-        "under",
-        "until",
-        "up",
-        "upon",
-        "us",
-        "very",
-        "via",
-        "was",
-        "we",
-        "well",
-        "were",
-        "what",
-        "whatever",
-        "when",
-        "whence",
-        "whenever",
-        "where",
-        "whereafter",
-        "whereas",
-        "whereby",
-        "wherein",
-        "whereupon",
-        "wherever",
-        "whether",
-        "which",
-        "while",
-        "whither",
-        "who",
-        "whoever",
-        "whole",
-        "whom",
-        "whose",
-        "why",
-        "will",
-        "with",
-        "within",
-        "without",
-        "would",
-        "yet",
-        "you",
-        "your",
-        "yours",
-        "yourself",
-        "yourselves",
-    ]
-)
+from .stopwords import ENGLISH_STOP_WORDS
 
 TOKEN_REGEX = re.compile(r"(?u)\b\w\w+\b")
 
@@ -399,8 +78,12 @@ class Page:
         self.analyze_headings = analyze_headings
         self.analyze_extra_tags = analyze_extra_tags
         self.encoding = encoding
-        self.title = ""
-        self.description = ""
+        self.title: str
+        self.author: str
+        self.description: str
+        self.hostname: str
+        self.sitename: str
+        self.date: str
         self.keywords = {}
         self.warnings = []
         self.translation = bytes.maketrans(
@@ -412,12 +95,16 @@ class Page:
         self.bigrams = Counter()
         self.trigrams = Counter()
         self.stem_to_word = {}
-        self.content_hash = None
+        self.content: str = None
+        self.content_hash: str = None
 
         if analyze_headings:
             self.headings = {}
         if analyze_extra_tags:
             self.additional_info = {}
+
+    def as_dict(self):
+        return self.talk()
 
     def talk(self):
         """
@@ -442,28 +129,6 @@ class Page:
             context["additional_info"] = self.additional_info
 
         return context
-
-    def populate(self, bs):
-        """
-        Populates the instance variables from BeautifulSoup
-        """
-
-        try:
-            self.title = bs.title.text
-        except AttributeError:
-            self.title = "No Title"
-
-        descr = bs.findAll("meta", attrs={"name": "description"})
-
-        if len(descr) > 0:
-            self.description = descr[0].get("content")
-
-        keywords = bs.findAll("meta", attrs={"name": "keywords"})
-
-        if len(keywords) > 0:
-            self.warn(
-                f"Keywords should be avoided as they are a spam indicator and no longer used by Search Engines: {keywords}"
-            )
 
     def analyze_heading_tags(self, bs):
         """
@@ -526,16 +191,12 @@ class Page:
                 self.warn(f"Returned {e}")
                 return
 
-            encoding = "ascii"
+            encoding = "utf8"
 
             if "content-type" in page.headers:
                 encoding = page.headers["content-type"].split("charset=")[-1]
 
             if encoding.lower() not in ("text/html", "text/plain", self.encoding):
-                # there is no unicode function in Python3
-                # try:
-                #     raw_html = unicode(page.read(), encoding)
-                # except:
                 self.warn(f"Can not read {encoding}")
                 return
             else:
@@ -543,20 +204,49 @@ class Page:
 
         self.content_hash = hashlib.sha1(raw_html.encode(self.encoding)).hexdigest()
 
+        # Use trafilatura to extract metadata
+        metadata = trafilatura.extract_metadata(
+            filecontent=raw_html,
+            default_url=self.url,
+            extensive=True,
+        )
+
+        # I want to grab values from this even if they don't exist
+        metadata = metadata.as_dict() if metadata else {}
+
+        self.title = metadata.get("title", "")
+        self.author = metadata.get("author", "")
+        self.description = metadata.get("description", "")
+        self.hostname = metadata.get("hostname", "")
+        self.sitename = metadata.get("sitename", "")
+        self.date = metadata.get("date", "")
+        metadata_keywords = metadata.get("keywords", "")
+
+        if len(metadata_keywords) > 0:
+            self.warn(
+                f"Keywords should be avoided as they are a spam indicator and no longer used by Search Engines"
+            )
+
+        # use trafulatura to extract the content
+        content = trafilatura.extract(
+            raw_html,
+            include_links=True,
+            include_formatting=False,
+            include_tables=True,
+            include_images=True,
+            output_format="json",
+        )
+
+        content = json.loads(content) if content else None
+
         # remove comments, they screw with BeautifulSoup
-        clean_html = re.sub(r"<!--.*?-->", r"", raw_html, flags=re.DOTALL)
+        html_without_comments = re.sub(r"<!--.*?-->", r"", raw_html, flags=re.DOTALL)
 
-        soup_lower = BeautifulSoup(
-            clean_html.lower(), "html.parser"
-        )  # .encode('utf-8')
-        soup_unmodified = BeautifulSoup(clean_html, "html.parser")  # .encode('utf-8')
+        # use BeautifulSoup to parse the more nuanced tags
+        soup_lower = BeautifulSoup(html_without_comments.lower(), "html.parser")
+        soup_unmodified = BeautifulSoup(html_without_comments, "html.parser")
 
-        texts = soup_lower.findAll(text=True)
-        visible_text = [w for w in filter(self.visible_tags, texts)]
-
-        self.process_text(visible_text)
-
-        self.populate(soup_lower)
+        self.process_text(content["text"])
 
         self.analyze_title()
         self.analyze_description()
@@ -599,13 +289,7 @@ class Page:
     def getngrams(self, D, n=2):
         return zip(*[D[i:] for i in range(n)])
 
-    def process_text(self, vt):
-        page_text = ""
-
-        for element in vt:
-            if element.strip():
-                page_text += element.strip().lower() + " "
-
+    def process_text(self, page_text):
         tokens = self.tokenize(page_text)
         raw_tokens = self.raw_tokenize(page_text)
         self.total_word_count = len(raw_tokens)
@@ -625,21 +309,20 @@ class Page:
         freq_dist = self.word_list_freq_dist(tokens)
 
         for word in freq_dist:
-            root = stem(word)
             cnt = freq_dist[word]
 
-            if root not in self.stem_to_word:
-                self.stem_to_word[root] = word
+            if word not in self.stem_to_word:
+                self.stem_to_word[word] = word
 
-            if root in self.wordcount:
-                self.wordcount[root] += cnt
+            if word in self.wordcount:
+                self.wordcount[word] += cnt
             else:
-                self.wordcount[root] = cnt
+                self.wordcount[word] = cnt
 
-            if root in self.keywords:
-                self.keywords[root] += cnt
+            if word in self.keywords:
+                self.keywords[word] += cnt
             else:
-                self.keywords[root] = cnt
+                self.keywords[word] = cnt
 
     def analyze_og(self, bs):
         """

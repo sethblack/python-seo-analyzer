@@ -3,4 +3,5 @@ certifi==2024.8.30
 Jinja2==3.1.4
 lxml==5.3.0
 MarkupSafe==2.1.5
+trafilatura==2.0.0
 urllib3==2.2.3
