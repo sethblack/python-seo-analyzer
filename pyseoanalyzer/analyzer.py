@@ -13,6 +13,7 @@ def analyze(
     analyze_headings=False,
     analyze_extra_tags=False,
     follow_links=True,
+    run_llm_analysis=False,
 ):
     start_time = time.time()
 
@@ -24,11 +25,12 @@ def analyze(
     }
 
     site = Website(
-        url,
-        sitemap_url,
-        analyze_headings,
-        analyze_extra_tags,
-        follow_links,
+        base_url=url,
+        sitemap=sitemap_url,
+        analyze_headings=analyze_headings,
+        analyze_extra_tags=analyze_extra_tags,
+        follow_links=follow_links,
+        run_llm_analysis=run_llm_analysis,
     )
 
     site.crawl()
