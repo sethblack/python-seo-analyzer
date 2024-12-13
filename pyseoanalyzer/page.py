@@ -103,9 +103,6 @@ class Page:
             self.additional_info = {}
 
     def as_dict(self):
-        return self.talk()
-
-    def talk(self):
         """
         Returns a dictionary that can be printed
         """
@@ -114,6 +111,10 @@ class Page:
             "url": self.url,
             "title": self.title,
             "description": self.description,
+            "author": self.author,
+            "hostname": self.hostname,
+            "sitename": self.sitename,
+            "date": self.date,
             "word_count": self.total_word_count,
             "keywords": self.sort_freq_dist(self.keywords, limit=5),
             "bigrams": self.bigrams,

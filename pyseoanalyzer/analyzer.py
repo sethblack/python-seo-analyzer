@@ -2,8 +2,10 @@ import time
 from operator import itemgetter
 from .website import Website
 
+
 def calc_total_time(start_time):
     return time.time() - start_time
+
 
 def analyze(
     url,
@@ -32,7 +34,7 @@ def analyze(
     site.crawl()
 
     for p in site.crawled_pages:
-        output["pages"].append(p.talk())
+        output["pages"].append(p.as_dict())
 
     output["duplicate_pages"] = [
         list(site.content_hashes[p])
