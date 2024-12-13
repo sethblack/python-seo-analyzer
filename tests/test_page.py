@@ -24,4 +24,7 @@ def test_analyze():
     p = page.Page(
         url="https://www.sethserver.com/", base_domain="https://www.sethserver.com/"
     )
+
     assert p.analyze()
+
+    assert "seth" in p.title.lower()

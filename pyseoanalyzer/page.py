@@ -12,7 +12,6 @@ from urllib.parse import urlsplit
 from urllib3.exceptions import HTTPError
 
 from .http import http
-from .stemmer import stem
 from .stopwords import ENGLISH_STOP_WORDS
 
 TOKEN_REGEX = re.compile(r"(?u)\b\w\w+\b")
