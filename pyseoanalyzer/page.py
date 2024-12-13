@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import lxml.html as lh
@@ -12,6 +13,7 @@ from urllib.parse import urlsplit
 from urllib3.exceptions import HTTPError
 
 from .http import http
+from .llm_analyst import LLMSEOEnhancer
 from .stopwords import ENGLISH_STOP_WORDS
 
 TOKEN_REGEX = re.compile(r"(?u)\b\w\w+\b")
@@ -66,6 +68,7 @@ class Page:
         analyze_headings=False,
         analyze_extra_tags=False,
         encoding="utf-8",
+        run_llm_analysis=False,
     ):
         """
         Variables go here, *not* outside of __init__
@@ -77,6 +80,7 @@ class Page:
         self.analyze_headings = analyze_headings
         self.analyze_extra_tags = analyze_extra_tags
         self.encoding = encoding
+        self.run_llm_analysis = run_llm_analysis
         self.title: str
         self.author: str
         self.description: str
@@ -97,8 +101,12 @@ class Page:
         self.content: str = None
         self.content_hash: str = None
 
+        if run_llm_analysis:
+            self.llm_analysis = {}
+
         if analyze_headings:
             self.headings = {}
+
         if analyze_extra_tags:
             self.additional_info = {}
 
@@ -125,8 +133,12 @@ class Page:
 
         if self.analyze_headings:
             context["headings"] = self.headings
+
         if self.analyze_extra_tags:
             context["additional_info"] = self.additional_info
+
+        if self.run_llm_analysis:
+            context["llm_analysis"] = self.llm_analysis
 
         return context
 
@@ -237,7 +249,7 @@ class Page:
             output_format="json",
         )
 
-        content = json.loads(content) if content else None
+        self.content = json.loads(content) if content else None
 
         # remove comments, they screw with BeautifulSoup
         html_without_comments = re.sub(r"<!--.*?-->", r"", raw_html, flags=re.DOTALL)
@@ -246,7 +258,7 @@ class Page:
         soup_lower = BeautifulSoup(html_without_comments.lower(), "html.parser")
         soup_unmodified = BeautifulSoup(html_without_comments, "html.parser")
 
-        self.process_text(content["text"])
+        self.process_text(self.content["text"])
 
         self.analyze_title()
         self.analyze_description()
@@ -257,10 +269,22 @@ class Page:
 
         if self.analyze_headings:
             self.analyze_heading_tags(soup_unmodified)
+
         if self.analyze_extra_tags:
             self.analyze_additional_tags(soup_unmodified)
 
+        if self.run_llm_analysis:
+            self.llm_analysis = self.use_llm_analyzer()
+
         return True
+
+    def use_llm_analyzer(self):
+        """
+        Use the LLM analyzer to enhance the SEO analysis
+        """
+
+        llm_enhancer = LLMSEOEnhancer()
+        return asyncio.run(llm_enhancer.enhance_seo_analysis(self.content))
 
     def word_list_freq_dist(self, wordlist):
         freq = [wordlist.count(w) for w in wordlist]
