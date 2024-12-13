@@ -28,3 +28,16 @@ def test_analyze():
     assert p.analyze()
 
     assert "seth" in p.title.lower()
+
+
+def test_analyze_with_llm():
+    p = page.Page(
+        url="https://www.sethserver.com/",
+        base_domain="https://www.sethserver.com/",
+        run_llm_analysis=True,
+    )
+
+    assert p.analyze()
+
+    assert "seth" in p.title.lower()
+    assert "summary" in p.llm_analysis
