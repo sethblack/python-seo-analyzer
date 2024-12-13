@@ -1,7 +1,10 @@
 beautifulsoup4==4.12.3
 certifi==2024.8.30
 Jinja2==3.1.4
+langchain==0.3.11
+langchain-anthropic==0.3.0
 lxml==5.3.0
 MarkupSafe==3.0.2
+python-dotenv==1.0.1
 trafilatura==2.0.0
 urllib3==2.2.3
