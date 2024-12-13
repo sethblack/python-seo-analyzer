@@ -1,9 +1,9 @@
-Python SEO Analyzer
+Python SEO and GEO Analyzer
 ===================
 
-An SEO tool that analyzes the structure of a site, crawls the site, counts words in the body of the site and warns of any technical SEO issues.
+A modern SEO and GEO analysis tool that combines technical optimization and authentic human value. Beyond traditional site crawling and structure analysis, it uses AI to evaluate content's expertise signals, conversational engagement, and cross-platform presence. It helps you maintain strong technical foundations while ensuring your site demonstrates genuine authority and value to real users.
 
-Requires Python 3.6+, BeautifulSoup4 and urllib3.
+The AI features were heavily influenced by the clickbait-titled SEL article [A 13-point roadmap for thriving in the age of AI search](https://searchengineland.com/seo-roadmap-ai-search-449199).
 
 Installation
 ------------
@@ -11,10 +11,12 @@ Installation
 ### PIP
 
 ```
-pip3 install pyseoanalyzer
+pip install pyseoanalyzer
 ```
 
 ### Docker
+
+The docker image is available on [Docker Hub](https://hub.docker.com/r/sethblack/python-seo-analyzer) and can be run with the same command-line arguments as the script.
 
 ```
 docker run sethblack/python-seo-analyzer [ARGS ...]
@@ -78,6 +80,11 @@ Alternatively, you can run the analysis as a script from the seoanalyzer folder.
 ```sh
 python -m seoanalyzer https://www.sethserver.com/ -f html > results.html
 ```
+
+AI Optimization
+---------------
+
+The first pass of AI optimization features use Anthropic's `claude-3-sonnet-20240229` model to evaluate the content of the site. You will need to have an API key from [Anthropic](https://www.anthropic.com/) to use this feature. The API key needs to be set as the environment variable `ANTHROPIC_API_KEY`. I recommend using a `.env` file to set this variable. Once the API key is set, the AI optimization features can be enabled with the `--run-llm-analysis` flag.
 
 Notes
 -----
