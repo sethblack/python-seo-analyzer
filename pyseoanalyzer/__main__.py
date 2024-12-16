@@ -46,6 +46,12 @@ def main():
         action="store_false",
         help="Analyze all the existing inner links as well (might be time consuming).",
     )
+    arg_parser.add_argument(
+        "--run-llm-analysis",
+        default=False,
+        action="store_true",
+        help="Run LLM analysis on the content.",
+    )
 
     args = arg_parser.parse_args()
 
@@ -55,6 +61,7 @@ def main():
         analyze_headings=args.analyze_headings,
         analyze_extra_tags=args.analyze_extra_tags,
         follow_links=args.no_follow_links,
+        run_llm_analysis=args.run_llm_analysis,
     )
 
     if args.output_format == "html":

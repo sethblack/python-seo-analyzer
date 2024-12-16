@@ -8,7 +8,7 @@ class Http:
         user_agent = {"User-Agent": "Mozilla/5.0"}
 
         self.http = PoolManager(
-            timeout=Timeout(connect=1.0, read=2.0),
+            timeout=Timeout(connect=2.0, read=7.0),
             cert_reqs="CERT_REQUIRED",
             ca_certs=certifi.where(),
             headers=user_agent,

@@ -1,6 +1,7 @@
 # I don't want the python virtual env in github!
 venv
 env
+.env
 
 # nor visual
 .vscode

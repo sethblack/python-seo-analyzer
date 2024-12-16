@@ -9,13 +9,20 @@ from .page import Page
 
 class Website:
     def __init__(
-        self, base_url, sitemap, analyze_headings, analyze_extra_tags, follow_links
+        self,
+        base_url,
+        sitemap,
+        analyze_headings=True,
+        analyze_extra_tags=False,
+        follow_links=False,
+        run_llm_analysis=False,
     ):
         self.base_url = base_url
         self.sitemap = sitemap
         self.analyze_headings = analyze_headings
         self.analyze_extra_tags = analyze_extra_tags
         self.follow_links = follow_links
+        self.run_llm_analysis = run_llm_analysis
         self.crawled_pages = []
         self.crawled_urls = set()
         self.page_queue = []
@@ -36,7 +43,9 @@ class Website:
         """
         Stolen from the minidom documentation
         """
-        return "".join(node.data for node in nodelist if node.nodeType == node.TEXT_NODE)
+        return "".join(
+            node.data for node in nodelist if node.nodeType == node.TEXT_NODE
+        )
 
     def crawl(self):
         try:
@@ -63,6 +72,7 @@ class Website:
                     base_domain=self.base_url,
                     analyze_headings=self.analyze_headings,
                     analyze_extra_tags=self.analyze_extra_tags,
+                    run_llm_analysis=self.run_llm_analysis,
                 )
 
                 if page.parsed_url.netloc != page.base_domain.netloc:
