@@ -81,10 +81,10 @@ class Page:
         self.analyze_extra_tags = analyze_extra_tags
         self.encoding = encoding
         self.run_llm_analysis = run_llm_analysis
-        self.title: str
-        self.author: str
-        self.description: str
-        self.hostname: str
+        self.title: str = ""
+        self.author: str = ""
+        self.description: str = ""
+        self.hostname: str = ""
         self.sitename: str
         self.date: str
         self.keywords = {}
@@ -224,15 +224,21 @@ class Page:
         )
 
         # I want to grab values from this even if they don't exist
-        metadata = metadata.as_dict() if metadata else {}
+        metadata_dict = metadata.as_dict() if metadata else {}
 
-        self.title = metadata.get("title", "")
-        self.author = metadata.get("author", "")
-        self.description = metadata.get("description", "")
-        self.hostname = metadata.get("hostname", "")
-        self.sitename = metadata.get("sitename", "")
-        self.date = metadata.get("date", "")
-        metadata_keywords = metadata.get("keywords", "")
+        # Helper function to get value or default to "" if None or 'None'
+        def get_meta_value(key):
+            value = metadata_dict.get(key)
+            return "" if value is None or value == "None" else value
+
+        # Ensure fields are strings, defaulting to "" if None or 'None'
+        self.title = get_meta_value("title")
+        self.author = get_meta_value("author")
+        self.description = get_meta_value("description")
+        self.hostname = get_meta_value("hostname")
+        self.sitename = get_meta_value("sitename")
+        self.date = get_meta_value("date")
+        metadata_keywords = get_meta_value("keywords")
 
         if len(metadata_keywords) > 0:
             self.warn(

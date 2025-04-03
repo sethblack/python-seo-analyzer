@@ -5,6 +5,8 @@ langchain==0.3.50
 langchain-anthropic==0.3.10
 lxml==5.3.1
 MarkupSafe==3.0.2
+pytest==8.3.2 # Added for testing
+pytest-mock==3.14.0 # Added for testing
 python-dotenv==1.1.0
 trafilatura==2.0.0
 urllib3==2.3.0
