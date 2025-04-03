@@ -41,6 +41,11 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: sethblack/python-seo-analyzer # Your Docker Hub image
+          tags: |
+            # Add timestamp tag YYYYMMDDHHMM (using HH for 24hr, mm for minutes)
+            type=timestamp,format=yyyyMMddHHmm
+            # Explicitly add the 'latest' tag for all manual runs
+            type=raw,value=latest,enable=true
 
       # Build and push Docker image with attestation
       # https://github.com/docker/build-push-action
