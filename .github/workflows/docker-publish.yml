@@ -53,9 +53,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }} # Use tags from metadata
           labels: ${{ steps.meta.outputs.labels }} # Use labels from metadata
           # Attestations for provenance and SBOM
+          # Correct format: type=<type>,<key>=<value>
           attests: |
-            provenance:builder-id=${{ github.workflow }}/${{ github.job_id }}
-            sbom:scan-mode=local,scan-args=--exclude=./tests
+            type=provenance,builder-id=${{ github.workflow }}/${{ github.job_id }}
+            type=sbom,scan-mode=local,scan-args=--exclude=./tests
 
       # Sign the resulting Docker image digest.
       # https://github.com/sigstore/cosign
