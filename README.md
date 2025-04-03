@@ -85,7 +85,7 @@ docker run --rm my-seo-analyzer http://example.com/
 docker run --rm -e ANTHROPIC_API_KEY="your_api_key_here" my-seo-analyzer http://example.com/ --run-llm-analysis
 
 # Run with HTML output saved locally using the built image
-docker run --rm -v "$(pwd):/app/output" my-seo-analyzer /bin/sh -c "seoanalyze http://example.com/ --output-format html > /app/output/results.html"
+docker run --rm -v "$(pwd):/app/output" my-seo-analyzer /bin/sh -c "python-seo-analyzer http://example.com/ --output-format html > /app/output/results.html"
 # Adjust Windows commands as needed (see volume mounting example above)
 ```
 
@@ -95,19 +95,19 @@ Command-line Usage
 If you run without a sitemap it will start crawling at the homepage.
 
 ```sh
-seoanalyze http://www.domain.com/
+python-seo-analyzer http://www.domain.com/
 ```
 
 Or you can specify the path to a sitmap to seed the urls to scan list.
 
 ```sh
-seoanalyze http://www.domain.com/ --sitemap path/to/sitemap.xml
+seoanapython-seo-analyzerlyze http://www.domain.com/ --sitemap path/to/sitemap.xml
 ```
 
 HTML output can be generated from the analysis instead of json.
 
 ```sh
-seoanalyze http://www.domain.com/ --output-format html
+python-seo-analyzer http://www.domain.com/ --output-format html
 ```
 
 API
