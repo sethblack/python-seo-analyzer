@@ -4,15 +4,20 @@ import argparse
 import inspect
 import json
 import os
+import sys
 
 from .analyzer import analyze
+from . import __version__
 
 
 def main():
     module_path = os.path.dirname(inspect.getfile(analyze))
-
-    arg_parser = argparse.ArgumentParser()
-
+    arg_parser = argparse.ArgumentParser(
+        description="Analyze SEO aspects of a website."
+    )
+    arg_parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}"
+    )
     arg_parser.add_argument("site", help="URL of the site you are wanting to analyze.")
     arg_parser.add_argument(
         "-s", "--sitemap", help="URL of the sitemap to seed the crawler with."

@@ -78,18 +78,24 @@ class Website:
                 if page.parsed_url.netloc != page.base_domain.netloc:
                     continue
 
-                page.analyze()
+                # Analyze the page and check if successful
+                analysis_successful = page.analyze()
 
-                self.content_hashes[page.content_hash].add(page.url)
-                self.wordcount.update(page.wordcount)
-                self.bigrams.update(page.bigrams)
-                self.trigrams.update(page.trigrams)
+                # Only process and add the page if analysis completed
+                if analysis_successful:
+                    self.content_hashes[page.content_hash].add(page.url)
+                    self.wordcount.update(page.wordcount)
+                    self.bigrams.update(page.bigrams)
+                    self.trigrams.update(page.trigrams)
 
-                self.page_queue.extend(page.links)
+                    # Only add links if following is enabled and analysis was successful
+                    if self.follow_links:
+                        self.page_queue.extend(page.links)
 
-                self.crawled_pages.append(page)
-                self.crawled_urls.add(page.url)
+                    self.crawled_pages.append(page)
+                    self.crawled_urls.add(page.url)
 
+                # Stop after the first page if not following links, regardless of analysis success
                 if not self.follow_links:
                     break
         except Exception as e:
