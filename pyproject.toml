@@ -50,7 +50,7 @@ classifiers = [
 ]
 
 [project.scripts]
-python-seo-analyzer = "pyseoanalyzer.__main__:main"
+python-seo-analyzer = "seoanalyze.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/sethblack/python-seo-analyzer"
