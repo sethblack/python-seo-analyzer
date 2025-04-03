@@ -12,7 +12,7 @@ dependencies = [
     "beautifulsoup4==4.13.3",
     "certifi==2025.1.31",
     "Jinja2==3.1.6",
-    "langchain==0.3.50",
+    "langchain==0.3.22",
     "langchain-anthropic==0.3.10",
     "lxml==5.3.1",
     "MarkupSafe==3.0.2",
@@ -50,7 +50,7 @@ classifiers = [
 ]
 
 [project.scripts]
-python-seo-analyzer = "seoanalyze.__main__:main"
+python-seo-analyzer = "pyseoanalyzer.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/sethblack/python-seo-analyzer"

@@ -18,10 +18,14 @@ RUN groupadd -r appgroup && useradd --no-log-init -r -g appgroup appuser
 # Set ownership of the app directory
 RUN chown -R appuser:appgroup /python-seo-analyzer
 
-# Switch to the non-root user
-USER appuser
-
+# Switch back to root to install the package system-wide
+USER root
 RUN python3 -m pip install /python-seo-analyzer
 
-ENTRYPOINT ["/usr/local/bin/seoanalyze"]
+# Switch back to the non-root user
+USER appuser
+
+WORKDIR /app
+
+ENTRYPOINT ["python-seo-analyzer"]
 CMD ["--version"]
