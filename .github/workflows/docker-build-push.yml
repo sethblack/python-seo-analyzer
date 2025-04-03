@@ -42,8 +42,8 @@ jobs:
         with:
           images: sethblack/python-seo-analyzer # Your Docker Hub image
           tags: |
-            # Add timestamp tag YYYYMMDDHHMM (using HH for 24hr, mm for minutes)
-            type=timestamp,format=yyyyMMddHHmm
+            # Add short SHA tag based on the Git commit
+            type=sha,format=short
             # Explicitly add the 'latest' tag for all manual runs
             type=raw,value=latest,enable=true
 
