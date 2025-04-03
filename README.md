@@ -11,7 +11,9 @@ The AI features were heavily influenced by the clickbait-titled SEL article [A 1
 Note About Python
 -----------------
 
-I've written quite a bit about the speed of Python and how there are very specific use cases where it isn't the best choice. I feel like crawling websites is definitely one of those cases. I wrote this tool in Python around 2010 to solve thea very specific need of crawling some small HTML-only websites for startups I was working at. I'm excited to see how much it has grown and how many people are using it. I feel like Python SEO Analyzer is acceptable for most smaller use cases, but if you are looking for something faster, I've built a much faster and more comprehensive tool [Black SEO Analyzer](https://github.com/sethblack/black-seo-analyzer).
+I've written quite a bit about the speed of Python and how there are very specific use cases where it isn't the best choice. I feel like crawling websites is definitely one of those cases. I wrote this tool in Python around 2010 to solve the very specific need of crawling some small HTML-only websites for startups I was working at. I'm excited to see how much it has grown and how many people are using it. I feel like Python SEO Analyzer is acceptable for most smaller use cases, but if you are looking for something better, I've built a much faster and more comprehensive tool [Black SEO Analyzer](https://github.com/sethblack/black-seo-analyzer).
+
+-Seth
 
 Installation
 ------------
