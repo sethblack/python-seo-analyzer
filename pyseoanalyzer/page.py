@@ -203,16 +203,17 @@ class Page:
                 self.warn(f"Returned {e}")
                 return
 
-            encoding = "utf8"
+            encoding = self.encoding
 
             if "content-type" in page.headers:
-                encoding = page.headers["content-type"].split("charset=")[-1]
+                content_type = page.headers["content-type"]
+                if not any(t in content_type for t in ("text/html", "text/plain")):
+                    self.warn(f"Can not read {content_type}")
+                    return
+                if "charset=" in content_type:
+                    encoding = content_type.split("charset=")[-1].strip()
 
-            if encoding.lower() not in ("text/html", "text/plain", self.encoding):
-                self.warn(f"Can not read {encoding}")
-                return
-            else:
-                raw_html = page.data.decode(self.encoding)
+            raw_html = page.data.decode(encoding, errors="replace")
 
         self.content_hash = hashlib.sha1(raw_html.encode(self.encoding)).hexdigest()
 
