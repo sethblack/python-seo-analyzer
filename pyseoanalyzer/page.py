@@ -273,6 +273,7 @@ class Page:
         self.analyze_a_tags(soup_unmodified)
         self.analyze_img_tags(soup_lower)
         self.analyze_h1_tags(soup_lower)
+        self.analyze_html_lang(soup_lower)
 
         if self.analyze_headings:
             self.analyze_heading_tags(soup_unmodified)
@@ -448,6 +449,14 @@ class Page:
 
         if len(htags) == 0:
             self.warn("Each page should have at least one h1 tag")
+
+    def analyze_html_lang(self, bs):
+        """
+        Make sure the HTML tag has a lang attribute
+        """
+        html_tag = bs.find("html")
+        if html_tag is not None and not html_tag.get("lang"):
+            self.warn("Missing lang attribute on <html> tag")
 
     def analyze_a_tags(self, bs):
         """

@@ -30,6 +30,31 @@ def test_analyze():
     assert "seth" in p.title.lower()
 
 
+def test_analyze_html_lang_missing():
+    from bs4 import BeautifulSoup
+
+    p = page.Page(url="https://example.com/", base_domain="https://example.com/")
+    soup = BeautifulSoup(
+        "<html><head><title>Test</title></head><body><p>Hello</p></body></html>",
+        "html.parser",
+    )
+    p.analyze_html_lang(soup)
+    assert len(p.warnings) == 1
+    assert "lang" in p.warnings[0].lower()
+
+
+def test_analyze_html_lang_present():
+    from bs4 import BeautifulSoup
+
+    p = page.Page(url="https://example.com/", base_domain="https://example.com/")
+    soup = BeautifulSoup(
+        '<html lang="en"><head><title>Test</title></head><body><p>Hello</p></body></html>',
+        "html.parser",
+    )
+    p.analyze_html_lang(soup)
+    assert len(p.warnings) == 0
+
+
 def test_analyze_with_llm():
     p = page.Page(
         url="https://www.sethserver.com/",
