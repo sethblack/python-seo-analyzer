@@ -16,6 +16,7 @@ class Website:
         analyze_extra_tags=False,
         follow_links=False,
         run_llm_analysis=False,
+        max_pages=None,
     ):
         self.base_url = base_url
         self.sitemap = sitemap
@@ -23,6 +24,7 @@ class Website:
         self.analyze_extra_tags = analyze_extra_tags
         self.follow_links = follow_links
         self.run_llm_analysis = run_llm_analysis
+        self.max_pages = max_pages
         self.crawled_pages = []
         self.crawled_urls = set()
         self.page_queue = []
@@ -94,6 +96,10 @@ class Website:
 
                     self.crawled_pages.append(page)
                     self.crawled_urls.add(page.url)
+
+                    # Stop if we've reached the maximum number of pages
+                    if self.max_pages is not None and len(self.crawled_pages) >= self.max_pages:
+                        break
 
                 # Stop after the first page if not following links, regardless of analysis success
                 if not self.follow_links:

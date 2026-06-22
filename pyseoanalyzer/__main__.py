@@ -57,6 +57,12 @@ def main():
         action="store_true",
         help="Run LLM analysis on the content.",
     )
+    arg_parser.add_argument(
+        "--max-pages",
+        default=None,
+        type=int,
+        help="Maximum number of pages to crawl. Useful for large sites.",
+    )
 
     args = arg_parser.parse_args()
 
@@ -67,6 +73,7 @@ def main():
         analyze_extra_tags=args.analyze_extra_tags,
         follow_links=args.no_follow_links,
         run_llm_analysis=args.run_llm_analysis,
+        max_pages=args.max_pages,
     )
 
     if args.output_format == "html":

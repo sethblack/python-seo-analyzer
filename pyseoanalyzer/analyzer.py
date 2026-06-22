@@ -14,6 +14,7 @@ def analyze(
     analyze_extra_tags=False,
     follow_links=True,
     run_llm_analysis=False,
+    max_pages=None,
 ):
     start_time = time.time()
 
@@ -31,6 +32,7 @@ def analyze(
         analyze_extra_tags=analyze_extra_tags,
         follow_links=follow_links,
         run_llm_analysis=run_llm_analysis,
+        max_pages=max_pages,
     )
 
     site.crawl()
