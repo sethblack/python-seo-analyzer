@@ -13,7 +13,7 @@ dependencies = [
     "certifi==2025.1.31",
     "Jinja2==3.1.6",
     "langchain==0.3.30",
-    "langchain-anthropic==0.3.10",
+    "langchain-anthropic==1.4.6",
     "lxml==6.1.0",
     "MarkupSafe==3.0.2",
     "python-dotenv==1.1.0",
