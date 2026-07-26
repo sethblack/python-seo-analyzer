@@ -7,6 +7,21 @@ from .http import http
 from .page import Page
 
 
+# User-agent tokens for AI crawlers/agents that read a site's robots.txt to
+# decide whether they may fetch it. Not exhaustive, but covers the major
+# training and retrieval crawlers as of 2026.
+AI_CRAWLER_USER_AGENTS = [
+    "GPTBot",
+    "ChatGPT-User",
+    "OAI-SearchBot",
+    "ClaudeBot",
+    "Claude-User",
+    "anthropic-ai",
+    "PerplexityBot",
+    "Google-Extended",
+]
+
+
 class Website:
     def __init__(
         self,
@@ -32,6 +47,11 @@ class Website:
         self.bigrams = Counter()
         self.trigrams = Counter()
         self.content_hashes = defaultdict(set)
+        self.ai_crawler_access = {
+            "llms_txt": False,
+            "robots_txt_found": False,
+            "blocked_ai_bots": [],
+        }
 
     def check_dns(self, url_to_check):
         try:
@@ -49,7 +69,67 @@ class Website:
             node.data for node in nodelist if node.nodeType == node.TEXT_NODE
         )
 
+    def check_ai_crawler_access(self):
+        """
+        Checks whether the site publishes an llms.txt file and whether its
+        robots.txt explicitly disallows any of the well-known AI crawler
+        user-agents (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc).
+
+        Returns a dict:
+            {
+                "llms_txt": bool,
+                "robots_txt_found": bool,
+                "blocked_ai_bots": [str, ...],
+            }
+        """
+        result = {
+            "llms_txt": False,
+            "robots_txt_found": False,
+            "blocked_ai_bots": [],
+        }
+
+        base = self.base_url.rstrip("/")
+
+        try:
+            llms_response = http.get(f"{base}/llms.txt")
+            result["llms_txt"] = llms_response.status == 200
+        except Exception:
+            pass
+
+        try:
+            robots_response = http.get(f"{base}/robots.txt")
+            if robots_response.status == 200:
+                result["robots_txt_found"] = True
+                robots_txt = robots_response.data.decode("utf-8", errors="ignore")
+
+                current_agents = []
+                for line in robots_txt.splitlines():
+                    line = line.split("#", 1)[0].strip()
+                    if not line or ":" not in line:
+                        continue
+
+                    field, _, value = line.partition(":")
+                    field = field.strip().lower()
+                    value = value.strip()
+
+                    if field == "user-agent":
+                        current_agents = [value]
+                    elif field == "disallow" and value == "/" and current_agents:
+                        for agent in current_agents:
+                            for bot in AI_CRAWLER_USER_AGENTS:
+                                if (
+                                    agent.lower() == bot.lower()
+                                    and bot not in result["blocked_ai_bots"]
+                                ):
+                                    result["blocked_ai_bots"].append(bot)
+        except Exception:
+            pass
+
+        return result
+
     def crawl(self):
+        self.ai_crawler_access = self.check_ai_crawler_access()
+
         try:
             if self.sitemap:
                 page = http.get(self.sitemap)
