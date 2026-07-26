@@ -16,7 +16,7 @@ dependencies = [
     "langchain-anthropic==1.4.6",
     "lxml==6.1.0",
     "MarkupSafe==3.0.2",
-    "python-dotenv==1.1.0",
+    "python-dotenv==1.2.2",
     "trafilatura==2.0.0",
     "urllib3==2.7.0",
 ]
