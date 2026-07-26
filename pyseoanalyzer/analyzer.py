@@ -23,6 +23,7 @@ def analyze(
         "keywords": [],
         "errors": [],
         "total_time": 0,  # Initialize to 0 before calculation
+        "ai_crawler_access": {},
     }
 
     site = Website(
@@ -36,6 +37,8 @@ def analyze(
     )
 
     site.crawl()
+
+    output["ai_crawler_access"] = site.ai_crawler_access
 
     for p in site.crawled_pages:
         output["pages"].append(p.as_dict())
