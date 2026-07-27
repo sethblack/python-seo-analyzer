@@ -10,16 +10,30 @@ from .page import Page
 # User-agent tokens for AI crawlers/agents that read a site's robots.txt to
 # decide whether they may fetch it. Not exhaustive, but covers the major
 # training and retrieval crawlers as of 2026.
-AI_CRAWLER_USER_AGENTS = [
+#
+# These fall into two independently-controlled categories per each vendor's
+# own docs: training crawlers (build model training data) and retrieval/
+# citation crawlers (fetch a page live to answer a specific query or cite
+# it). Blocking training alone is a legitimate, defensible policy choice.
+# Blocking a retrieval crawler is what actually removes a site from an
+# assistant's answers/citations -- and it's frequently accidental, the
+# result of a blanket "block AI scraping" pass that never revisited the
+# distinction. Pooling both into a single "blocked" signal hides that.
+AI_CRAWLER_TRAINING_BOTS = [
     "GPTBot",
-    "ChatGPT-User",
-    "OAI-SearchBot",
-    "ClaudeBot",
-    "Claude-User",
-    "anthropic-ai",
-    "PerplexityBot",
     "Google-Extended",
+    "ClaudeBot",
+    "anthropic-ai",
 ]
+
+AI_CRAWLER_RETRIEVAL_BOTS = [
+    "OAI-SearchBot",
+    "ChatGPT-User",
+    "PerplexityBot",
+    "Claude-User",
+]
+
+AI_CRAWLER_USER_AGENTS = AI_CRAWLER_TRAINING_BOTS + AI_CRAWLER_RETRIEVAL_BOTS
 
 
 class Website:
@@ -51,6 +65,8 @@ class Website:
             "llms_txt": False,
             "robots_txt_found": False,
             "blocked_ai_bots": [],
+            "blocked_training_bots": [],
+            "blocked_retrieval_bots": [],
         }
 
     def check_dns(self, url_to_check):
@@ -73,19 +89,26 @@ class Website:
         """
         Checks whether the site publishes an llms.txt file and whether its
         robots.txt explicitly disallows any of the well-known AI crawler
-        user-agents (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc).
+        user-agents (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, etc),
+        split into training crawlers vs. retrieval/citation crawlers -- see
+        the module-level comment on AI_CRAWLER_TRAINING_BOTS for why that
+        split matters.
 
         Returns a dict:
             {
                 "llms_txt": bool,
                 "robots_txt_found": bool,
-                "blocked_ai_bots": [str, ...],
+                "blocked_ai_bots": [str, ...],       # all blocked bots, unchanged for compatibility
+                "blocked_training_bots": [str, ...],  # subset: training-only crawlers
+                "blocked_retrieval_bots": [str, ...], # subset: retrieval/citation crawlers
             }
         """
         result = {
             "llms_txt": False,
             "robots_txt_found": False,
             "blocked_ai_bots": [],
+            "blocked_training_bots": [],
+            "blocked_retrieval_bots": [],
         }
 
         base = self.base_url.rstrip("/")
@@ -122,6 +145,10 @@ class Website:
                                     and bot not in result["blocked_ai_bots"]
                                 ):
                                     result["blocked_ai_bots"].append(bot)
+                                    if bot in AI_CRAWLER_TRAINING_BOTS:
+                                        result["blocked_training_bots"].append(bot)
+                                    elif bot in AI_CRAWLER_RETRIEVAL_BOTS:
+                                        result["blocked_retrieval_bots"].append(bot)
         except Exception:
             pass
 
