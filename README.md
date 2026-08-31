@@ -46,6 +46,10 @@ docker run --rm sethblack/python-seo-analyzer http://example.com/ --sitemap /pat
 # Replace "your_api_key_here" with your actual Anthropic API key
 docker run --rm -e ANTHROPIC_API_KEY="your_api_key_here" sethblack/python-seo-analyzer http://example.com/ --run-llm-analysis
 
+# Run with AI analysis through OrcaRouter (requires ORCAROUTER_API_KEY)
+# Replace "your_api_key_here" with your actual OrcaRouter API key
+docker run --rm -e ORCAROUTER_API_KEY="your_api_key_here" sethblack/python-seo-analyzer http://example.com/ --run-llm-analysis
+
 # Save HTML output to your local machine
 # This mounts the current directory (.) into /app/output inside the container.
 # The output file 'results.html' will be saved in your current directory.
@@ -83,6 +87,9 @@ docker run --rm my-seo-analyzer http://example.com/
 
 # Run with AI analysis using the locally built image
 docker run --rm -e ANTHROPIC_API_KEY="your_api_key_here" my-seo-analyzer http://example.com/ --run-llm-analysis
+
+# Run with AI analysis through OrcaRouter using the locally built image
+docker run --rm -e ORCAROUTER_API_KEY="your_api_key_here" my-seo-analyzer http://example.com/ --run-llm-analysis
 
 # Run with HTML output saved locally using the built image
 docker run --rm -v "$(pwd):/app/output" my-seo-analyzer /bin/sh -c "python-seo-analyzer http://example.com/ --output-format html > /app/output/results.html"
@@ -152,6 +159,8 @@ AI Optimization
 ---------------
 
 The first pass of AI optimization features use Anthropic's `claude-3-sonnet-20240229` model to evaluate the content of the site. You will need to have an API key from [Anthropic](https://www.anthropic.com/) to use this feature. The API key needs to be set as the environment variable `ANTHROPIC_API_KEY`. I recommend using a `.env` file to set this variable. Once the API key is set, the AI optimization features can be enabled with the `--run-llm-analysis` flag.
+
+You can also run the AI optimization pass through [OrcaRouter](https://www.orcarouter.ai), an OpenAI- and Anthropic-compatible AI gateway. Set the environment variable `ORCAROUTER_API_KEY` and OrcaRouter is used instead of Anthropic, routing the same analysis through its Anthropic-compatible endpoint. OrcaRouter exposes many models under a `vendor/model` namespace (e.g. `anthropic/claude-sonnet-4.6`, `openai/gpt-4o`); the default model is `anthropic/claude-sonnet-4.6`, and you can pick another one with the `ORCAROUTER_MODEL` environment variable.
 
 Notes
 -----

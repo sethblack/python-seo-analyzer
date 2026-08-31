@@ -56,15 +56,37 @@ class SEORecommendations(BaseModel):
     )
 
 
+# OrcaRouter exposes an Anthropic-compatible endpoint (https://api.orcarouter.ai)
+# in front of many model providers using a "vendor/model" namespace. Setting
+# ORCAROUTER_API_KEY routes the AI optimization pass through it, otherwise the
+# original Anthropic path is used.
+ORCAROUTER_API_URL = "https://api.orcarouter.ai"
+ORCAROUTER_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
+
+
 class LLMSEOEnhancer:
     def __init__(self):
-        self.llm = ChatAnthropic(
-            model="claude-3-sonnet-20240229",
-            anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY"),
-            temperature=0,
-            timeout=30,
-            max_retries=3,
-        )
+        orca_router_api_key = os.environ.get("ORCAROUTER_API_KEY")
+
+        if orca_router_api_key:
+            self.llm = ChatAnthropic(
+                model=os.environ.get(
+                    "ORCAROUTER_MODEL", ORCAROUTER_DEFAULT_MODEL
+                ),
+                anthropic_api_key=orca_router_api_key,
+                anthropic_api_url=ORCAROUTER_API_URL,
+                temperature=0,
+                timeout=30,
+                max_retries=3,
+            )
+        else:
+            self.llm = ChatAnthropic(
+                model="claude-3-sonnet-20240229",
+                anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY"),
+                temperature=0,
+                timeout=30,
+                max_retries=3,
+            )
         self._setup_chains()
 
     def _setup_chains(self):
