@@ -24,6 +24,45 @@ Installation
 pip install pyseoanalyzer
 ```
 
+### pipx (macOS with Homebrew)
+
+Homebrew marks its Python installation as externally managed, so `pip install pyseoanalyzer`
+aborts with `error: externally-managed-environment` (see [PEP 668](https://peps.python.org/pep-0668/)).
+Use [pipx](https://pipx.pypa.io/) instead: it installs `pyseoanalyzer` into its own isolated
+environment and puts the `python-seo-analyzer` command on your `PATH`.
+
+```sh
+# Install pipx if you do not have it yet
+brew install pipx
+pipx ensurepath
+
+# Install pyseoanalyzer into its own isolated environment
+pipx install pyseoanalyzer
+```
+
+Once installed, the `python-seo-analyzer` command is available with no virtual environment
+activation required:
+
+```sh
+python-seo-analyzer http://www.domain.com/
+```
+
+To upgrade or remove the isolated install:
+
+```sh
+pipx upgrade pyseoanalyzer
+pipx uninstall pyseoanalyzer
+```
+
+If you would rather keep using `pip`, install into a virtual environment so nothing is written
+to the Homebrew-managed Python:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+pip install pyseoanalyzer
+```
+
 ### Docker
 
 #### Using the Pre-built Image from Docker Hub
