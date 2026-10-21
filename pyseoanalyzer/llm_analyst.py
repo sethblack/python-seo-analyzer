@@ -63,10 +63,17 @@ class SEORecommendations(BaseModel):
 ORCAROUTER_API_URL = "https://api.orcarouter.ai"
 ORCAROUTER_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
 
+# Cheaper Inference also exposes an Anthropic-compatible endpoint
+# (https://api.cheaperinference.com) with bare model ids. Setting
+# CHEAPER_INFERENCE_API_KEY routes the AI optimization pass through it.
+CHEAPER_INFERENCE_API_URL = "https://api.cheaperinference.com"
+CHEAPER_INFERENCE_DEFAULT_MODEL = "claude-sonnet-5"
+
 
 class LLMSEOEnhancer:
     def __init__(self):
         orca_router_api_key = os.environ.get("ORCAROUTER_API_KEY")
+        cheaper_inference_api_key = os.environ.get("CHEAPER_INFERENCE_API_KEY")
 
         if orca_router_api_key:
             self.llm = ChatAnthropic(
@@ -75,6 +82,17 @@ class LLMSEOEnhancer:
                 ),
                 anthropic_api_key=orca_router_api_key,
                 anthropic_api_url=ORCAROUTER_API_URL,
+                temperature=0,
+                timeout=30,
+                max_retries=3,
+            )
+        elif cheaper_inference_api_key:
+            self.llm = ChatAnthropic(
+                model=os.environ.get(
+                    "CHEAPER_INFERENCE_MODEL", CHEAPER_INFERENCE_DEFAULT_MODEL
+                ),
+                anthropic_api_key=cheaper_inference_api_key,
+                anthropic_api_url=CHEAPER_INFERENCE_API_URL,
                 temperature=0,
                 timeout=30,
                 max_retries=3,

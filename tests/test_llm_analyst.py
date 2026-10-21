@@ -2,6 +2,8 @@ import pytest
 from langchain_anthropic import ChatAnthropic
 from pyseoanalyzer.llm_analyst import (
     LLMSEOEnhancer,
+    CHEAPER_INFERENCE_API_URL,
+    CHEAPER_INFERENCE_DEFAULT_MODEL,
     ORCAROUTER_API_URL,
     ORCAROUTER_DEFAULT_MODEL,
 )
@@ -20,6 +22,7 @@ def seo_data():
 @pytest.fixture
 def anthropic_key(monkeypatch):
     monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("CHEAPER_INFERENCE_API_KEY", raising=False)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
 
 
@@ -27,6 +30,13 @@ def anthropic_key(monkeypatch):
 def orcarouter_key(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.setenv("ORCAROUTER_API_KEY", "sk-orca-test")
+
+
+@pytest.fixture
+def cheaper_inference_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+    monkeypatch.setenv("CHEAPER_INFERENCE_API_KEY", "ci_live_test")
 
 
 def test_init_uses_anthropic(anthropic_key):
@@ -49,6 +59,23 @@ def test_init_orcarouter_honors_model_override(orcarouter_key, monkeypatch):
     enhancer = LLMSEOEnhancer()
     assert enhancer.llm.model == "openai/gpt-4o"
     assert enhancer.llm.anthropic_api_url == ORCAROUTER_API_URL
+
+
+def test_init_uses_cheaper_inference_when_configured(cheaper_inference_key):
+    enhancer = LLMSEOEnhancer()
+    assert isinstance(enhancer.llm, ChatAnthropic)
+    assert enhancer.llm.model == CHEAPER_INFERENCE_DEFAULT_MODEL
+    assert enhancer.llm.anthropic_api_url == CHEAPER_INFERENCE_API_URL
+    assert enhancer.llm.temperature == 0
+
+
+def test_init_cheaper_inference_honors_model_override(
+    cheaper_inference_key, monkeypatch
+):
+    monkeypatch.setenv("CHEAPER_INFERENCE_MODEL", "gpt-5.4-mini")
+    enhancer = LLMSEOEnhancer()
+    assert enhancer.llm.model == "gpt-5.4-mini"
+    assert enhancer.llm.anthropic_api_url == CHEAPER_INFERENCE_API_URL
 
 
 @pytest.mark.asyncio
