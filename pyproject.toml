@@ -10,7 +10,7 @@ authors = [
 ]
 dependencies = [
     "beautifulsoup4==4.13.3",
-    "certifi==2025.1.31",
+    "certifi==2026.10.19",
     "Jinja2==3.1.6",
     "langchain==0.3.30",
     "langchain-anthropic==1.4.6",
