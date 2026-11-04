@@ -60,6 +60,7 @@ def test_analyze_basic(MockWebsite):
         analyze_extra_tags=False,
         follow_links=False,
         run_llm_analysis=False,
+        max_pages=None,
     )
     # Check crawl was called
     mock_site_instance.crawl.assert_called_once()
@@ -122,6 +123,7 @@ def test_analyze_duplicates(MockWebsite):
         analyze_extra_tags=False,
         follow_links=True,  # Check default
         run_llm_analysis=False,
+        max_pages=None,
     )
     mock_site_instance.crawl.assert_called_once()
 
@@ -153,6 +155,7 @@ def test_analyze_arguments_passthrough(MockWebsite):
         analyze_extra_tags=True,
         follow_links=False,
         run_llm_analysis=True,
+        max_pages=5,
     )
 
     # --- Assertions ---
@@ -164,6 +167,7 @@ def test_analyze_arguments_passthrough(MockWebsite):
         analyze_extra_tags=True,
         follow_links=False,
         run_llm_analysis=True,
+        max_pages=5,
     )
     mock_site_instance.crawl.assert_called_once()
 
