@@ -1,6 +1,7 @@
 import pytest
 from langchain_anthropic import ChatAnthropic
 from pyseoanalyzer.llm_analyst import (
+    ANTHROPIC_DEFAULT_MODEL,
     LLMSEOEnhancer,
     ORCAROUTER_API_URL,
     ORCAROUTER_DEFAULT_MODEL,
@@ -20,6 +21,7 @@ def seo_data():
 @pytest.fixture
 def anthropic_key(monkeypatch):
     monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
 
 
@@ -32,8 +34,15 @@ def orcarouter_key(monkeypatch):
 def test_init_uses_anthropic(anthropic_key):
     enhancer = LLMSEOEnhancer()
     assert isinstance(enhancer.llm, ChatAnthropic)
-    assert enhancer.llm.model == "claude-3-sonnet-20240229"
+    assert enhancer.llm.model == ANTHROPIC_DEFAULT_MODEL
+    assert enhancer.llm.model != "claude-3-sonnet-20240229"
     assert enhancer.llm.temperature == 0
+
+
+def test_init_anthropic_honors_model_override(anthropic_key, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_MODEL", "claude-opus-4-6")
+    enhancer = LLMSEOEnhancer()
+    assert enhancer.llm.model == "claude-opus-4-6"
 
 
 def test_init_uses_orcarouter_when_configured(orcarouter_key):

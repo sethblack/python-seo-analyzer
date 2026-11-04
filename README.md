@@ -197,7 +197,7 @@ python -m seoanalyzer https://www.sethserver.com/ -f html > results.html
 AI Optimization
 ---------------
 
-The first pass of AI optimization features use Anthropic's `claude-3-sonnet-20240229` model to evaluate the content of the site. You will need to have an API key from [Anthropic](https://www.anthropic.com/) to use this feature. The API key needs to be set as the environment variable `ANTHROPIC_API_KEY`. I recommend using a `.env` file to set this variable. Once the API key is set, the AI optimization features can be enabled with the `--run-llm-analysis` flag.
+The first pass of AI optimization features use Anthropic's `claude-sonnet-4-6` model to evaluate the content of the site. Set the environment variable `ANTHROPIC_MODEL` to use another Anthropic model. You will need to have an API key from [Anthropic](https://www.anthropic.com/) to use this feature. The API key needs to be set as the environment variable `ANTHROPIC_API_KEY`. I recommend using a `.env` file to set this variable. Once the API key is set, the AI optimization features can be enabled with the `--run-llm-analysis` flag.
 
 You can also run the AI optimization pass through [OrcaRouter](https://www.orcarouter.ai), an OpenAI- and Anthropic-compatible AI gateway. Set the environment variable `ORCAROUTER_API_KEY` and OrcaRouter is used instead of Anthropic, routing the same analysis through its Anthropic-compatible endpoint. OrcaRouter exposes many models under a `vendor/model` namespace (e.g. `anthropic/claude-sonnet-4.6`, `openai/gpt-4o`); the default model is `anthropic/claude-sonnet-4.6`, and you can pick another one with the `ORCAROUTER_MODEL` environment variable.
 
