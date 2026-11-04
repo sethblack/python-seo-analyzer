@@ -100,6 +100,7 @@ class Page:
         self.stem_to_word = {}
         self.content: str = None
         self.content_hash: str = None
+        self.structured_data = []
 
         if run_llm_analysis:
             self.llm_analysis = {}
@@ -129,6 +130,7 @@ class Page:
             "trigrams": self.trigrams,
             "warnings": self.warnings,
             "content_hash": self.content_hash,
+            "structured_data": self.structured_data,
         }
 
         if self.analyze_headings:
@@ -274,6 +276,7 @@ class Page:
         self.analyze_img_tags(soup_lower)
         self.analyze_h1_tags(soup_lower)
         self.analyze_html_lang(soup_lower)
+        self.analyze_structured_data(soup_unmodified)
 
         if self.analyze_headings:
             self.analyze_heading_tags(soup_unmodified)
@@ -457,6 +460,45 @@ class Page:
         html_tag = bs.find("html")
         if html_tag is not None and not html_tag.get("lang"):
             self.warn("Missing lang attribute on <html> tag")
+
+    def analyze_structured_data(self, bs):
+        """
+        Find JSON-LD structured data and record its schema.org types
+        """
+        scripts = bs.find_all(
+            "script", attrs={"type": re.compile(r"^\s*application/ld\+json", re.I)}
+        )
+
+        if len(scripts) == 0:
+            self.warn("Missing JSON-LD structured data (schema.org)")
+            return
+
+        for script in scripts:
+            try:
+                data = json.loads(script.string or script.get_text())
+            except ValueError as e:
+                self.warn(f"Invalid JSON-LD structured data: {e}")
+                continue
+
+            for schema_type in self._json_ld_types(data):
+                if schema_type not in self.structured_data:
+                    self.structured_data.append(schema_type)
+
+    def _json_ld_types(self, data):
+        """
+        Yield the @type of each top-level JSON-LD object, including @graph entries
+        """
+        if isinstance(data, list):
+            for item in data:
+                yield from self._json_ld_types(item)
+        elif isinstance(data, dict):
+            schema_type = data.get("@type")
+            if isinstance(schema_type, str):
+                yield schema_type
+            elif isinstance(schema_type, list):
+                yield from (t for t in schema_type if isinstance(t, str))
+            if "@graph" in data:
+                yield from self._json_ld_types(data["@graph"])
 
     def analyze_a_tags(self, bs):
         """
