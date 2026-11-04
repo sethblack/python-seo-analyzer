@@ -63,6 +63,11 @@ class SEORecommendations(BaseModel):
 ORCAROUTER_API_URL = "https://api.orcarouter.ai"
 ORCAROUTER_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
 
+# Model for the direct Anthropic path. claude-3-sonnet-20240229 was retired by
+# Anthropic on 2025-07-21, so every call to it fails. ANTHROPIC_MODEL picks
+# another model without a code change.
+ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-6"
+
 
 class LLMSEOEnhancer:
     def __init__(self):
@@ -81,7 +86,7 @@ class LLMSEOEnhancer:
             )
         else:
             self.llm = ChatAnthropic(
-                model="claude-3-sonnet-20240229",
+                model=os.environ.get("ANTHROPIC_MODEL", ANTHROPIC_DEFAULT_MODEL),
                 anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY"),
                 temperature=0,
                 timeout=30,
