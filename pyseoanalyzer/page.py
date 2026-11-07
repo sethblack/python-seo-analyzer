@@ -213,9 +213,14 @@ class Page:
                     self.warn(f"Can not read {content_type}")
                     return
                 if "charset=" in content_type:
-                    encoding = content_type.split("charset=")[-1].strip()
+                    charset = content_type.split("charset=")[-1].split(";")[0]
+                    encoding = charset.strip().strip("\"'") or self.encoding
 
-            raw_html = page.data.decode(encoding, errors="replace")
+            try:
+                raw_html = page.data.decode(encoding, errors="replace")
+            except LookupError:
+                self.warn(f"Unknown charset {encoding}, decoding as {self.encoding}")
+                raw_html = page.data.decode(self.encoding, errors="replace")
 
         self.content_hash = hashlib.sha1(raw_html.encode(self.encoding)).hexdigest()
 
@@ -267,7 +272,8 @@ class Page:
         soup_lower = BeautifulSoup(html_without_comments.lower(), "html.parser")
         soup_unmodified = BeautifulSoup(html_without_comments, "html.parser")
 
-        self.process_text(self.content["text"])
+        # trafilatura returns None when it finds no main content
+        self.process_text(self.content["text"] if self.content else "")
 
         self.analyze_title()
         self.analyze_description()
