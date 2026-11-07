@@ -121,3 +121,46 @@ def test_analyze_with_llm():
 
     assert "seth" in p.title.lower()
     assert "summary" in p.llm_analysis
+
+
+class FakeResponse:
+    def __init__(self, data, content_type):
+        self.data = data
+        self.headers = {"content-type": content_type}
+
+
+def _analyze_with_content_type(mocker, content_type, body):
+    mocker.patch.object(page.http, "get", return_value=FakeResponse(body, content_type))
+    p = page.Page(url="https://example.com/", base_domain="https://example.com/")
+    return p, p.analyze()
+
+
+def test_analyze_page_without_main_text(mocker):
+    body = "<html><head><title>Login</title></head><body></body></html>"
+    p, ok = _analyze_with_content_type(
+        mocker, "text/html; charset=utf-8", body.encode("utf-8")
+    )
+
+    assert ok
+    assert p.title == "Login"
+    assert p.total_word_count == 0
+
+
+def test_analyze_charset_with_extra_parameter(mocker):
+    body = "<html><head><title>Café</title></head><body></body></html>"
+    p, ok = _analyze_with_content_type(
+        mocker, "text/html; charset=utf-8; foo=bar", body.encode("utf-8")
+    )
+
+    assert ok
+    assert p.title == "Café"
+
+
+def test_analyze_unknown_charset_falls_back(mocker):
+    body = "<html><head><title>Hello</title></head><body></body></html>"
+    p, ok = _analyze_with_content_type(
+        mocker, "text/html; charset=no-such-charset", body.encode("utf-8")
+    )
+
+    assert ok
+    assert p.title == "Hello"
