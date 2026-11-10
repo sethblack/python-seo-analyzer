@@ -49,7 +49,7 @@ def main():
         "--no-follow-links",
         default=True,
         action="store_false",
-        help="Analyze all the existing inner links as well (might be time consuming).",
+        help="Do not follow inner links; only analyze the given page (faster).",
     )
     arg_parser.add_argument(
         "--run-llm-analysis",
