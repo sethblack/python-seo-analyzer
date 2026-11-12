@@ -63,6 +63,12 @@ class SEORecommendations(BaseModel):
 ORCAROUTER_API_URL = "https://api.orcarouter.ai"
 ORCAROUTER_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
 
+# UberLLM also exposes an Anthropic-compatible endpoint (https://api.uberllm.dev)
+# with "vendor/model" ids. Setting UBERLLM_API_KEY routes the AI optimization
+# pass through it when ORCAROUTER_API_KEY is not set.
+UBERLLM_API_URL = "https://api.uberllm.dev"
+UBERLLM_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
+
 # Model for the direct Anthropic path. claude-3-sonnet-20240229 was retired by
 # Anthropic on 2025-07-21, so every call to it fails. ANTHROPIC_MODEL picks
 # another model without a code change.
@@ -72,6 +78,7 @@ ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-6"
 class LLMSEOEnhancer:
     def __init__(self):
         orca_router_api_key = os.environ.get("ORCAROUTER_API_KEY")
+        uberllm_api_key = os.environ.get("UBERLLM_API_KEY")
 
         if orca_router_api_key:
             self.llm = ChatAnthropic(
@@ -80,6 +87,15 @@ class LLMSEOEnhancer:
                 ),
                 anthropic_api_key=orca_router_api_key,
                 anthropic_api_url=ORCAROUTER_API_URL,
+                temperature=0,
+                timeout=30,
+                max_retries=3,
+            )
+        elif uberllm_api_key:
+            self.llm = ChatAnthropic(
+                model=os.environ.get("UBERLLM_MODEL", UBERLLM_DEFAULT_MODEL),
+                anthropic_api_key=uberllm_api_key,
+                anthropic_api_url=UBERLLM_API_URL,
                 temperature=0,
                 timeout=30,
                 max_retries=3,

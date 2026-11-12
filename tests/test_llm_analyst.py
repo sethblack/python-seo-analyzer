@@ -5,6 +5,8 @@ from pyseoanalyzer.llm_analyst import (
     LLMSEOEnhancer,
     ORCAROUTER_API_URL,
     ORCAROUTER_DEFAULT_MODEL,
+    UBERLLM_API_URL,
+    UBERLLM_DEFAULT_MODEL,
 )
 
 
@@ -21,6 +23,7 @@ def seo_data():
 @pytest.fixture
 def anthropic_key(monkeypatch):
     monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("UBERLLM_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_MODEL", raising=False)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
 
@@ -57,6 +60,35 @@ def test_init_orcarouter_honors_model_override(orcarouter_key, monkeypatch):
     monkeypatch.setenv("ORCAROUTER_MODEL", "openai/gpt-4o")
     enhancer = LLMSEOEnhancer()
     assert enhancer.llm.model == "openai/gpt-4o"
+    assert enhancer.llm.anthropic_api_url == ORCAROUTER_API_URL
+
+
+@pytest.fixture
+def uberllm_key(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("UBERLLM_MODEL", raising=False)
+    monkeypatch.setenv("UBERLLM_API_KEY", "ull_test")
+
+
+def test_init_uses_uberllm_when_configured(uberllm_key):
+    enhancer = LLMSEOEnhancer()
+    assert isinstance(enhancer.llm, ChatAnthropic)
+    assert enhancer.llm.model == UBERLLM_DEFAULT_MODEL
+    assert enhancer.llm.anthropic_api_url == UBERLLM_API_URL
+    assert enhancer.llm.temperature == 0
+
+
+def test_init_uberllm_honors_model_override(uberllm_key, monkeypatch):
+    monkeypatch.setenv("UBERLLM_MODEL", "deepseek/deepseek-v4-pro")
+    enhancer = LLMSEOEnhancer()
+    assert enhancer.llm.model == "deepseek/deepseek-v4-pro"
+    assert enhancer.llm.anthropic_api_url == UBERLLM_API_URL
+
+
+def test_init_orcarouter_wins_when_both_keys_set(uberllm_key, monkeypatch):
+    monkeypatch.setenv("ORCAROUTER_API_KEY", "sk-orca-test")
+    enhancer = LLMSEOEnhancer()
     assert enhancer.llm.anthropic_api_url == ORCAROUTER_API_URL
 
 
