@@ -48,6 +48,11 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP",
 ]
 
+[project.optional-dependencies]
+litellm = [
+    "litellm>=1.97.0,<1.106.0",
+]
+
 [project.scripts]
 python-seo-analyzer = "pyseoanalyzer.__main__:main"
 
