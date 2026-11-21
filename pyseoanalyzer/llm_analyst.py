@@ -10,6 +10,8 @@ import asyncio
 import json
 import os
 
+from .litellm_chat import LiteLLMChat
+
 load_dotenv()
 
 
@@ -69,6 +71,14 @@ ORCAROUTER_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
 UBERLLM_API_URL = "https://api.uberllm.dev"
 UBERLLM_DEFAULT_MODEL = "anthropic/claude-sonnet-4.6"
 
+# LiteLLM (https://docs.litellm.ai) reaches 100+ providers through their own
+# APIs (OpenAI, Gemini, Vertex AI, Bedrock, Azure, Mistral, Ollama, ...), not
+# only Anthropic-compatible ones. Setting LITELLM_MODEL to a LiteLLM model id
+# such as "gemini/gemini-2.5-flash" or "bedrock/<model id>" routes the pass
+# through it, with each provider's usual credential variables. LITELLM_API_BASE
+# and LITELLM_API_KEY point it at a LiteLLM proxy instead. It takes precedence
+# because it is only set by users who choose it.
+
 # Model for the direct Anthropic path. claude-3-sonnet-20240229 was retired by
 # Anthropic on 2025-07-21, so every call to it fails. ANTHROPIC_MODEL picks
 # another model without a code change.
@@ -77,10 +87,20 @@ ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-6"
 
 class LLMSEOEnhancer:
     def __init__(self):
+        litellm_model = os.environ.get("LITELLM_MODEL")
         orca_router_api_key = os.environ.get("ORCAROUTER_API_KEY")
         uberllm_api_key = os.environ.get("UBERLLM_API_KEY")
 
-        if orca_router_api_key:
+        if litellm_model:
+            self.llm = LiteLLMChat(
+                model=litellm_model,
+                api_base=os.environ.get("LITELLM_API_BASE") or None,
+                api_key=os.environ.get("LITELLM_API_KEY") or None,
+                temperature=0,
+                timeout=30,
+                max_retries=3,
+            )
+        elif orca_router_api_key:
             self.llm = ChatAnthropic(
                 model=os.environ.get(
                     "ORCAROUTER_MODEL", ORCAROUTER_DEFAULT_MODEL
